@@ -16,7 +16,30 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-}, { timestamps: true }); // Automatically add createdAt and updatedAt fields
+  addresses: [
+    {
+      street: { type: String, required: true },
+      city: { type: String, required: true },
+      state: { type: String, required: true },
+      pincode: { type: String, required: true },
+      phone: { type: String, required: true },
+    }
+  ],
+  cart: [
+      {
+        product: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Product'
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          min: 1,
+          default: 1
+        }
+      }
+    ]
+  }, { timestamps: true }); // Automatically add createdAt and updatedAt fields
 
 // This function runs BEFORE a user document is saved to the database
 UserSchema.pre('save', async function(next) {

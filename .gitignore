@@ -1,0 +1,27 @@
+# Node modules (client + server)
+client/node_modules/
+server/node_modules/
+
+# Builds
+client/build/
+client/dist/
+server/dist/
+
+# Env and secrets
+*.env
+
+# IDE
+.vscode/
+.DS_Store
+
+# OS
+Thumbs.db
+
+# Logs
+*.log
+
+# Next.js (if used later)
+.next/
+
+# Git
+.git/

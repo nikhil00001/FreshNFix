@@ -21,6 +21,10 @@ mongoose.connect(process.env.MONGO_URI, {
 
   // --- Define Routes ---
 app.use('/api/auth', require('./routes/auth')); // Add this line
+app.use('/api/products', require('./routes/products')); // Add this line
+app.use('/api/cart', require('./routes/cart'));
+app.use('/api/orders', require('./routes/orders'));
+
 
 // A simple test route to make sure the server is running
 app.get('/api', (req, res) => {
