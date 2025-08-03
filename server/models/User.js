@@ -16,6 +16,12 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  // Add this 'role' field:
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
+  },
   addresses: [
     {
       street: { type: String, required: true },
