@@ -42,4 +42,20 @@ router.post('/', auth, async (req, res) => {
 
 });
 
+
+// ... existing POST '/' route ...
+
+// --- Get orders for the logged-in user ---
+// Endpoint: GET /api/orders/myorders
+// Access: Private
+router.get('/myorders', auth, async (req, res) => {
+  try {
+    const orders = await Order.find({ user: req.user.id }).sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;

@@ -40,19 +40,26 @@ export default function Navbar() {
               )}
             </Link>
 
-            {isLoggedIn ? (
+        {isLoggedIn ? (
+            <div className="flex items-center space-x-4">
+              {/* Add this link to the account page */}
+              <Link href="/account" className="text-gray-600 hover:text-blue-600 font-medium">
+                My Account
+              </Link>
               <button
                 onClick={handleLogout}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >
                 Logout
               </button>
-            ) : (
-              <Link href="/login" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                Login
-              </Link>
-            )}
-          </div>
+            </div>
+          ) : (
+            <Link href="/login" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+              Login
+            </Link>
+          )}
+        </div>
+
         </div>
       </div>
     </nav>
