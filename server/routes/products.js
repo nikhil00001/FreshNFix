@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const auth = require('../middleware/auth'); // Import auth middleware
+const admin = require('../middleware/admin'); // Import admin middleware
+
 
 // --- Get all products ---
 // Endpoint: GET /api/products

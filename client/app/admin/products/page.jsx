@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
+
 
 // This would be a more robust check in a real app, maybe in a layout or middleware
 const useAdminAuth = () => {
@@ -37,9 +39,12 @@ export default function AdminProductsPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Manage Products</h1>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-          Add New Product
-        </button>
+        {/* Wrap the button in a Link component */}
+        <Link href="/admin/products/new">
+          <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+            Add New Product
+          </button>
+        </Link>
       </div>
       
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
