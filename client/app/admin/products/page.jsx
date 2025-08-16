@@ -31,6 +31,33 @@ export default function AdminProductsPage() {
     fetchProducts();
   }, []);
 
+  // ... existing useEffect and other code ...
+
+  const handleDelete = async (productId) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`/api/products/${productId}`, {
+        method: 'DELETE',
+        headers: { 'x-auth-token': token },
+      });
+
+      if (res.ok) {
+        // Remove the product from the state to update the UI instantly
+        setProducts(products.filter(p => p._id !== productId));
+        alert('Product deleted successfully!');
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.msg || 'Failed to delete product');
+      }
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+    }
+  };
+
   if (!isAdmin) {
     return <p className="text-center mt-8 text-red-500">Access Denied.</p>;
   }
@@ -70,8 +97,14 @@ export default function AdminProductsPage() {
                   <p className="text-gray-900 whitespace-no-wrap">{product.stock}</p>
                 </td>
                 <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm text-right">
-                  <button className="text-indigo-600 hover:text-indigo-900">Edit</button>
-                  <button className="text-red-600 hover:text-red-900 ml-4">Delete</button>
+                  {/* UPDATE THE EDIT BUTTON TO A LINK */}
+                  <Link href={`/admin/products/edit/${product._id}`} className="text-indigo-600 hover:text-indigo-900">
+                    Edit
+                  </Link>
+                  {/* ADD ONCLICK TO THE DELETE BUTTON */}
+                  <button onClick={() => handleDelete(product._id)} className="text-red-600 hover:text-red-900 ml-4">
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}

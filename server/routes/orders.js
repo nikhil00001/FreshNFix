@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const admin = require('../middleware/admin');
 const Order = require('../models/Order');
 const User = require('../models/User');
 
@@ -52,6 +53,40 @@ router.get('/myorders', auth, async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user.id }).sort({ createdAt: -1 });
     res.json(orders);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// ... existing routes: POST '/', GET '/myorders' ...
+
+// --- Get all orders (Admin Only) ---
+// Endpoint: GET /api/orders/all
+router.get('/all', [auth, admin], async (req, res) => {
+  try {
+    // Populate user's name and email to show in the admin panel
+    const orders = await Order.find().populate('user', 'name email').sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// --- Update order status (Admin Only) ---
+// Endpoint: PUT /api/orders/status/:id
+router.put('/status/:id', [auth, admin], async (req, res) => {
+  const { status } = req.body;
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ msg: 'Order not found' });
+    }
+
+    order.status = status;
+    await order.save();
+    res.json(order);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');

@@ -40,4 +40,42 @@ router.post('/', async (req, res) => {
   }
 });
 
+// ... existing GET '/' and POST '/' routes ...
+
+// --- Get a single product by ID (Public) ---
+router.get('/:id', async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ msg: 'Product not found' });
+    res.json(product);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// --- Update a product (Admin Only) ---
+router.put('/:id', [auth, admin], async (req, res) => {
+  try {
+    const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!product) return res.status(404).json({ msg: 'Product not found' });
+    res.json(product);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// --- Delete a product (Admin Only) ---
+router.delete('/:id', [auth, admin], async (req, res) => {
+  try {
+    const product = await Product.findByIdAndDelete(req.params.id);
+    if (!product) return res.status(404).json({ msg: 'Product not found' });
+    res.json({ msg: 'Product removed' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;
