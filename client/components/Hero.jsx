@@ -20,19 +20,23 @@ export default function Hero() {
         <p className="text-lg md:text-xl mb-8 max-w-2xl drop-shadow-md">
           The best quality products for you and your family, available with just a few clicks.
         </p>
-        <div className="w-full max-w-xl">
+         {/* UPDATE: This is now a form */}
+         <form action="/search" method="GET" className="w-full max-w-xl">
           <div className="relative">
             <input
               type="search"
+              name="q" // This is important, it becomes the URL query parameter
               placeholder="Search for products..."
               className="w-full p-4 rounded-full text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-400"
+              required
             />
-            <button className="absolute top-1/2 right-2 -translate-y-1/2 p-3 bg-orange-500 text-white rounded-full hover:bg-orange-600">
+            <button type="submit" className="absolute top-1/2 right-2 -translate-y-1/2 p-3 bg-orange-500 text-white rounded-full hover:bg-orange-600">
               <MagnifyingGlassIcon className="h-6 w-6" />
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </section>
   );
 }
+

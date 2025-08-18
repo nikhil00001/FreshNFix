@@ -40,6 +40,31 @@ router.post('/', async (req, res) => {
   }
 });
 
+
+// --- Search for products ---
+// Endpoint: GET /api/products/search?q=your_query
+router.get('/search', async (req, res) => {
+  try {
+    const query = req.query.q;
+    if (!query) {
+      return res.status(400).json({ msg: 'Search query is required' });
+    }
+
+    // Create a case-insensitive regular expression
+    const regex = new RegExp(query, 'i');
+
+    const products = await Product.find({
+      // Search in both name and description fields
+      $or: [{ name: regex }, { description: regex }],
+    });
+
+    res.json(products);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 // ... existing GET '/' and POST '/' routes ...
 
 // --- Get a single product by ID (Public) ---
@@ -77,5 +102,6 @@ router.delete('/:id', [auth, admin], async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
 
 module.exports = router;
