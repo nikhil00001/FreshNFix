@@ -1,4 +1,6 @@
 import ProductCard from '@/components/ProductCard';
+import Hero from '@/components/Hero'; // Import the new Hero component
+
 
 // Async function to fetch product data from our API
 async function getProducts() {
@@ -23,6 +25,7 @@ export default async function HomePage() {
 
   return (
     <main className="container mx-auto px-4 py-8">
+      <Hero /> {/* Add the Hero component here */}
       <h1 className="text-4xl font-extrabold text-center mb-2">
         Fresh Picks For You
       </h1>
