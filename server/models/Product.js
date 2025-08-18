@@ -32,6 +32,10 @@ const ProductSchema = new mongoose.Schema({
     required: true,
     default: 0,
   },
+  // Add this new field:
+  tag: { 
+    type: String, 
+    trim: true }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Product', ProductSchema);
