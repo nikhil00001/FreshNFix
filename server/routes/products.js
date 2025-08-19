@@ -103,5 +103,21 @@ router.delete('/:id', [auth, admin], async (req, res) => {
   }
 });
 
+// ... existing routes ...
+
+// --- Get products by category ---
+// Endpoint: GET /api/products/category/:categoryName
+router.get('/category/:categoryName', async (req, res) => {
+  try {
+    // Create a case-insensitive regular expression from the URL parameter
+    const categoryRegex = new RegExp(`^${req.params.categoryName}$`, 'i');
+    
+    const products = await Product.find({ category: categoryRegex });
+    res.json(products);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
 
 module.exports = router;
