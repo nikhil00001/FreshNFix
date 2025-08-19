@@ -2,6 +2,7 @@ import { MagnifyingGlassIcon } from '@heroicons/react/24/solid';
 
 export default function Hero() {
   return (
+    
     <section className="relative h-[500px] rounded-2xl overflow-hidden mb-12">
       {/* Background Image */}
       <img
@@ -35,6 +36,13 @@ export default function Hero() {
             </button>
           </div>
         </form>
+         {/* ADD THIS BUTTON */}
+         <a 
+           href="#categories"
+           className="mt-4 px-6 py-2 border border-white rounded-full text-white font-semibold hover:bg-white hover:text-gray-900 transition-colors duration-300"
+         >
+           Browse All Categories
+         </a>
       </div>
     </section>
   );
