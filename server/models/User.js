@@ -44,7 +44,12 @@ const UserSchema = new mongoose.Schema({
           default: 1
         }
       }
-    ]
+    ],
+    // Add this new wishlist field:
+  wishlist: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product'
+  }]
   }, { timestamps: true }); // Automatically add createdAt and updatedAt fields
 
 // This function runs BEFORE a user document is saved to the database

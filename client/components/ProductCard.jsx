@@ -1,14 +1,30 @@
 "use client";
 import { useContext } from 'react';
 import CartContext from '@/context/CartContext';
-import { PlusIcon } from '@heroicons/react/24/solid';
-import Link from 'next/link'; // Import Link
+import WishlistContext from '@/context/WishlistContext'; // Import WishlistContext
+import { PlusIcon, HeartIcon as HeartSolid } from '@heroicons/react/24/solid';
+import { HeartIcon as HeartOutline } from '@heroicons/react/24/outline'; // Import outline icon
+import Link from 'next/link';
 
 export default function ProductCard({ product }) {
   const { addToCart } = useContext(CartContext);
+  const { toggleWishlist, isProductInWishlist } = useContext(WishlistContext);
+
 
   return (
     <div className="relative bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-transform duration-300 hover:-translate-y-1">
+      {/* Wishlist Heart Icon */}
+      <button 
+        onClick={() => toggleWishlist(product._id)}
+        className="absolute top-3 right-3 z-10 p-1.5 bg-white/70 backdrop-blur-sm rounded-full"
+        aria-label="Toggle Wishlist"
+      >
+        {isProductInWishlist(product._id) ? (
+            <HeartSolid className="h-6 w-6 text-red-500" />
+        ) : (
+            <HeartOutline className="h-6 w-6 text-gray-600" />
+        )}
+      </button>
       {/* This link will wrap the image and text */}
       <Link href={`/product/${product._id}`}>
         {product.tag && (
