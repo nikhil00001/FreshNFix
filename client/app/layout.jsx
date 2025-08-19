@@ -1,5 +1,6 @@
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { Toaster } from 'react-hot-toast'; // Import the Toaster
 import { CartProvider } from '@/context/CartContext';
 import Navbar from '@/components/Navbar'; // Import the Navbar
 import Footer from '@/components/Footer'; // Import the new Footer
@@ -18,6 +19,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${inter.className} bg-gray-50`}>
+      <Toaster position="bottom-center" /> {/* Add the Toaster component here */}
         <CartProvider>
           <WishlistProvider> {/* Wrap everything in WishlistProvider */}
             {/* This will provide wishlist context to all components */}

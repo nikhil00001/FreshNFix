@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, useState, useEffect } from 'react';
+import toast from 'react-hot-toast'; // 1. Import toast
+
 
 const CartContext = createContext();
 
@@ -32,7 +34,7 @@ export const CartProvider = ({ children }) => {
   const addToCart = async (productId) => {
     const token = localStorage.getItem('token');
     if (!token) {
-        alert('Please log in to add items to your cart.');
+      toast.error('Please log in to add items to your cart.'); // Use toast.error
         return;
     }
     try {
@@ -47,13 +49,13 @@ export const CartProvider = ({ children }) => {
         if (res.ok) {
             const updatedCart = await res.json();
             setCart(updatedCart); // Update the cart state with the response from the server
-            alert('Item added to cart!');
+            toast.success('Item added to cart!'); // 2. Replace alert with toast.success
         } else {
           throw new Error('Failed to add item');
         }
     } catch (error) {
         console.error('Failed to add to cart:', error);
-        alert('Could not add item to cart.');
+        toast.error('Could not add item to cart.'); // 3. Replace alert with toast.error
     }
   };
   
