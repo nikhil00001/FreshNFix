@@ -2,6 +2,8 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { CartProvider } from '@/context/CartContext';
 import Navbar from '@/components/Navbar'; // Import the Navbar
+import Footer from '@/components/Footer'; // Import the new Footer
+
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -17,8 +19,10 @@ export default function RootLayout({ children }) {
         <CartProvider>
           <Navbar /> {/* Add the Navbar here */}
           <main>{children}</main> {/* Wrap page content in a main tag */}
+          <Footer /> {/* Add the Footer here */}
         </CartProvider>
       </body>
     </html>
   );
+
 }
