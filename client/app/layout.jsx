@@ -23,9 +23,9 @@ export default function RootLayout({ children }) {
         <CartProvider>
           <WishlistProvider> {/* Wrap everything in WishlistProvider */}
             {/* This will provide wishlist context to all components */}
-          <Navbar /> {/* Add the Navbar here */}
-          <main>{children}</main> {/* Wrap page content in a main tag */}
-          <Footer /> {/* Add the Footer here */}
+            <Navbar /> {/* Add the Navbar here */}
+              <main>{children}</main> {/* Wrap page content in a main tag */}
+            <Footer /> {/* Add the Footer here */}
           </WishlistProvider>
         </CartProvider>
       </body>

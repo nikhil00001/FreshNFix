@@ -1,4 +1,16 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+/* Add this section to set default body styles */
+@layer base {
+  body {
+    @apply bg-white text-gray-800;
+  }
+}
+/* End of section */
+
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --background: #ffffff;

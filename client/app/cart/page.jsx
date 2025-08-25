@@ -5,7 +5,28 @@ import CartContext from '@/context/CartContext';
 import Link from 'next/link';
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart } = useContext(CartContext);
+  const { cart, updateQuantity, removeFromCart, loading } = useContext(CartContext);
+
+  // 💡 SOLUTION: Wait for the data to be ready
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <h1 className="text-3xl font-bold">Loading Your Shopping Cart...</h1>
+      </div>
+    );
+  }
+
+  // If loading is false, it's safe to proceed
+  if (!cart || cart.length === 0) {
+    return (
+      <div className="text-center py-20">
+        <h1 className="text-3xl font-bold">Your Cart is Empty</h1>
+        <Link href="/" className="mt-4 inline-block px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+          Continue Shopping
+        </Link>
+      </div>
+    );
+  }
 
   const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
 
