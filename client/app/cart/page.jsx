@@ -30,17 +30,6 @@ export default function CartPage() {
 
   const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
 
-  if (cart.length === 0) {
-    return (
-      <div className="text-center py-20">
-        <h1 className="text-3xl font-bold">Your Cart is Empty</h1>
-        <Link href="/" className="mt-4 inline-block px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-          Continue Shopping
-        </Link>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Your Shopping Cart</h1>

@@ -22,7 +22,12 @@ router.post('/add', auth, async (req, res) => {
         }
         
         await user.save();
-        res.json(user.cart);
+        // --- 💡 SOLUTION: Find the user again and populate the cart ---
+        const populatedUser = await User.findById(req.user.id).populate('cart.product');
+
+        res.json(populatedUser.cart); // <-- Send the FULLY POPULATED cart back
+
+    
         
     } catch (err) {
         console.error(err.message);
