@@ -7,8 +7,21 @@ const OrderSchema = new mongoose.Schema({
     required: true,
   },
   items: [{
-    product: { type: Object, required: true },
-    quantity: { type: Number, required: true },
+    // --- 💡 SOLUTION: Change product to be a reference to the Product model ---
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true
+    },
+    quantity: {
+      type: Number,
+      required: true
+    },
+    // Storing the price at the time of order is good practice
+    price: {
+        type: Number,
+        required: true
+    }
   }],
   totalAmount: {
     type: Number,

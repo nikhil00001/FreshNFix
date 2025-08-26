@@ -21,7 +21,12 @@ router.post('/', auth, async (req, res) => {
 
     const newOrder = new Order({
       user: req.user.id,
-      items: user.cart.map(item => ({ product: item.product, quantity: item.quantity })),
+      // --- 💡 SOLUTION: Map cart items correctly, storing price and product ID ---
+      items: user.cart.map(item => ({
+        product: item.product._id, // Store only the ID
+        quantity: item.quantity,
+        price: item.product.price // Store the price at time of purchase
+      })),
       totalAmount,
       shippingAddress,
       fixedDeliverySlot,
@@ -51,7 +56,7 @@ router.post('/', auth, async (req, res) => {
 // Access: Private
 router.get('/myorders', auth, async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user.id }).sort({ createdAt: -1 });
+    const orders = await Order.find({ user: req.user.id }).populate('items.product').sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {
     console.error(err.message);
@@ -66,7 +71,7 @@ router.get('/myorders', auth, async (req, res) => {
 router.get('/all', [auth, admin], async (req, res) => {
   try {
     // Populate user's name and email to show in the admin panel
-    const orders = await Order.find().populate('user', 'name email').sort({ createdAt: -1 });
+    const orders = await Order.find().populate('user', 'name email').populate('items.product').sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {
     console.error(err.message);
