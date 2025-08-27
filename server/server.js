@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors'); // To allow communication between frontend and backend
 const mongoose = require('mongoose');
+cosnt path = require('path');
 require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();
@@ -25,13 +26,14 @@ mongoose.connect(process.env.MONGO_URI, {
   .catch(err => console.error("MongoDB connection error:", err));
   // --- End of Connection ---
 
-  // --- Define Routes ---
-app.use('/api/auth', require('./routes/auth')); // Add this line
-app.use('/api/products', require('./routes/products')); // Add this line
-app.use('/api/cart', require('./routes/cart'));
-app.use('/api/orders', require('./routes/orders'));
-// ... after other app.use statements
-app.use('/api/wishlist', require('./routes/wishlist'));
+  
+// --- 💡 2. Use path.join for all route imports ---
+app.use('/api/auth', require(path.join(__dirname, 'routes', 'auth')));
+app.use('/api/products', require(path.join(__dirname, 'routes', 'products')));
+app.use('/api/cart', require(path.join(__dirname, 'routes', 'cart')));
+app.use('/api/orders', require(path.join(__dirname, 'routes', 'orders')));
+app.use('/api/wishlist', require(path.join(__dirname, 'routes', 'wishlist')));
+
 
 
 // A simple test route to make sure the server is running
