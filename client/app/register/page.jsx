@@ -23,7 +23,9 @@ export default function RegisterPage() {
     }
 
     try {
-      const res = await fetch('/api/auth/register', { // Using the Next.js proxy
+      // Example of how to use it in your code
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${apiUrl}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),
