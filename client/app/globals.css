@@ -1,38 +1,26 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
-
 @tailwind base;
-/* Add this section to set default body styles */
-@layer base {
-  body {
-    @apply bg-white text-gray-800;
-  }
-}
-/* End of section */
-
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  body {
+    /* Default light mode styles: 
+      White background, dark text for everything.
+    */
+    @apply bg-white text-gray-800;
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Dark mode styles:
+    When the 'dark' class is present, apply these styles instead.
+    Dark background, light text.
+  */
+  .dark body {
+    @apply bg-gray-900 text-gray-200;
+  }
+
+  /* Optional: You can also set default heading colors for dark mode.
+  */
+  .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+    @apply text-white;
+  }
 }

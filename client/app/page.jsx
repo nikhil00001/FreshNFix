@@ -46,7 +46,7 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
-      <h1 className="text-4xl font-extrabold text-center mb-2">
+      <h1 className="text-4xl font-extrabold text-center mb-2 text-gray-800">
         Fresh Picks For You
       </h1>
       <p className="text-center text-gray-500 mb-8">
