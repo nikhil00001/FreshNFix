@@ -24,6 +24,7 @@ export default function RegisterPage() {
 
     try {
       // Example of how to use it in your code
+      // Trigger new deploy
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       const res = await fetch(`${apiUrl}/api/auth/register`, {
         method: 'POST',
