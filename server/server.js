@@ -6,8 +6,14 @@ require('dotenv').config(); // Load environment variables from .env file
 const app = express();
 const PORT = process.env.PORT || 5001; // We'll use port 5001 for the backend
 
+
+// --- 💡 SOLUTION: Configure CORS to only allow your frontend URL ---
+const corsOptions = {
+  origin: 'https://fresh-n-fix.vercel.app', // Your exact frontend URL
+  optionsSuccessStatus: 200 // For legacy browser support
+};
 // Middleware
-app.use(cors()); // Enable Cross-Origin Resource Sharing
+app.use(cors(corsOptions)); // Enable Cross-Origin Resource Sharing
 app.use(express.json()); // Allow server to accept JSON data in requests
 
 // --- Connect to MongoDB ---
