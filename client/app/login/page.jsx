@@ -12,12 +12,11 @@ export default function LoginPage() {
     setError(''); // Clear previous errors
 
     try {
-      const res = await fetch('http://localhost:5001/api/auth/login', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${apiUrl}/api/auth/register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
       });
 
       if (!res.ok) {
