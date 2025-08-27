@@ -43,6 +43,6 @@ app.get('/api', (req, res) => {
 
 // We will add our /api/auth/register and /api/auth/login routes here later
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+
+// --- 💡 SOLUTION: Instead of app.listen(), export the app for Vercel ---
+module.exports = app;
