@@ -2,7 +2,8 @@ import AddToCartButton from '@/components/AddToCartButton';
 
 async function getProduct(id) {
   try {
-    const res = await fetch(`http://localhost:5001/api/products/${id}`, { cache: 'no-store' });
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const res = await fetch(`{apiUrl}/api/products/${id}`, { cache: 'no-store' });
     if (!res.ok) return null;
     return res.json();
   } catch (error) {

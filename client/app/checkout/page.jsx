@@ -28,7 +28,8 @@ const handlePlaceOrder = async () => {
     
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('/api/orders', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch('{apiUrl}/api/orders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
           body: JSON.stringify({ shippingAddress, fixedDeliverySlot: deliverySlot }),

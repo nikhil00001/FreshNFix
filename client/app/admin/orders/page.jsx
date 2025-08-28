@@ -10,7 +10,8 @@ export default function AdminOrdersPage() {
     const fetchOrders = async () => {
       const token = localStorage.getItem('token');
       try {
-        const res = await fetch('/api/orders/all', {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        const res = await fetch(`{apiUrl}/api/orders/all`, {
           headers: { 'x-auth-token': token },
         });
         if (res.ok) {
