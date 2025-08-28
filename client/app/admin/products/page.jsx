@@ -19,7 +19,8 @@ export default function AdminProductsPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch('/api/products');
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        const res = await fetch(`${apiUrl}/api/products`);
         if (res.ok) {
           const data = await res.json();
           setProducts(data);
@@ -40,7 +41,9 @@ export default function AdminProductsPage() {
 
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`/api/products/${productId}`, {
+      // --- 💡 FIX: Use the full API URL ---
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${apiUrl}/api/products/${productId}`, {
         method: 'DELETE',
         headers: { 'x-auth-token': token },
       });

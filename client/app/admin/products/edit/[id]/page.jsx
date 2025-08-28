@@ -12,7 +12,9 @@ export default function EditProductPage() {
   useEffect(() => {
     if (id) {
       const fetchProduct = async () => {
-        const res = await fetch(`/api/products/${id}`);
+        // --- 💡 FIX: Use the full API URL ---
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        const res = await fetch(`${apiUrl}/api/products/${id}`);
         if (res.ok) {
           const data = await res.json();
           setProduct(data);
