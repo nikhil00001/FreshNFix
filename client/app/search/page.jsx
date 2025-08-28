@@ -4,7 +4,8 @@ import ProductCard from '@/components/ProductCard';
 async function getSearchResults(query) {
   if (!query) return [];
   try {
-    const res = await fetch(`http://localhost:5001/api/products/search?q=${query}`, {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const res = await fetch(`${apiUrl}/api/products/search?q=${query}`, {
       cache: 'no-store',
     });
     if (!res.ok) throw new Error('Failed to fetch results');
