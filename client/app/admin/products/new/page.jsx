@@ -24,7 +24,8 @@ export default function NewProductPage() {
     e.preventDefault();
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('/api/products', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${apiUrl}/api/products`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
