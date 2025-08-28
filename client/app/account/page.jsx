@@ -15,7 +15,9 @@ export default function AccountPage() {
       }
 
       try {
-        const res = await fetch('/api/orders/myorders', {
+        // --- 💡 FIX: Use the full API URL from the environment variable ---
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        const res = await fetch(`${apiUrl}/api/orders/myorders`, {
           headers: { 'x-auth-token': token },
         });
         if (res.ok) {

@@ -8,7 +8,8 @@ import { FireIcon, BeakerIcon, CakeIcon, ShoppingBagIcon } from '@heroicons/reac
 // Async function to fetch product data from our API
 async function getProducts() {
   try {
-    const res = await fetch('http://localhost:5001/api/products', { 
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const res = await fetch(`${apiUrl}/api/products`, { 
       cache: 'no-store' // Use this to ensure fresh data on every request
     });
 
