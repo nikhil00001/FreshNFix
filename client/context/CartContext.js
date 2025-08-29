@@ -20,7 +20,8 @@ export const CartProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const res = await fetch('http://localhost:5001/api/cart', {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+          const res = await fetch(`${apiUrl}/api/cart`, {
             headers: { 'x-auth-token': token },
           });
           if (res.ok) {
@@ -46,7 +47,8 @@ export const CartProvider = ({ children }) => {
       return;
     }
     try {
-      const res = await fetch('http://localhost:5001/api/cart/add', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${apiUrl}/api/cart/add`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,7 +72,8 @@ export const CartProvider = ({ children }) => {
   const updateQuantity = async (productId, quantity) => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://localhost:5001/api/cart/update', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${apiUrl}/api/cart/update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
         body: JSON.stringify({ productId, quantity }),
@@ -87,7 +90,8 @@ export const CartProvider = ({ children }) => {
   const removeFromCart = async (productId) => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`http://localhost:5001/api/cart/remove/${productId}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${apiUrl}/api/cart/remove/${productId}`, {
         method: 'DELETE',
         headers: { 'x-auth-token': token },
       });
