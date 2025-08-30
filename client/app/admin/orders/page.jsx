@@ -30,7 +30,8 @@ export default function AdminOrdersPage() {
   const handleStatusChange = async (orderId, newStatus) => {
     const token = localStorage.getItem('token');
     try {
-        const res = await fetch(`/api/orders/status/${orderId}`, {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        const res = await fetch(`${apiUrl}/api/orders/status/${orderId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
