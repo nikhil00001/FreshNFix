@@ -40,16 +40,22 @@ export default async function HomePage() {
       <Hero /> {/* Add the Hero component here */}
        {/* NEW CATEGORY SECTION */}
        <section id="categories" className="mb-12">
-        <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">Shop by Category</h2>
+        {/*<h2 className="text-3xl font-bold mb-6 text-center text-gray-800">Shop by Category</h2>*/}
+        <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center text-gray-800">Shop by Category</h2>
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {categories.map(category => (
             <CategoryCard key={category.slug} category={category} />
           ))}
         </div>
       </section>
-      <h1 className="text-4xl font-extrabold text-center mb-2 text-gray-800">
+      {/*<h1 className="text-4xl font-extrabold text-center mb-2 text-gray-800">
         Fresh Picks For You
-      </h1>
+      </h1>*/}
+      // Find the "Our Fresh Picks" h2 tag
+<h2 className="text-2xl md:text-3xl font-bold mb-6 text-center text-gray-800" id="products">
+  Our Fresh Picks
+</h2>
       <p className="text-center text-gray-500 mb-8">
         Groceries delivered fresh from the farm to your door, on a fixed time.
       </p>

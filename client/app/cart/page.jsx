@@ -48,7 +48,7 @@ export default function CartPage() {
                   min="1"
                   value={item.quantity}
                   onChange={(e) => updateQuantity(item.product._id, parseInt(e.target.value))}
-                  className="w-16 text-center border rounded"
+                  className="w-16 text-center border rounded-md py-2 font-semibold"
                 />
                 <button onClick={() => removeFromCart(item.product._id)} className="text-red-500 hover:text-red-700">
                   Remove
