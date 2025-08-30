@@ -3,28 +3,47 @@
 import { useContext, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CartContext from '@/context/CartContext';
+import toast from 'react-hot-toast';
 
 export default function CheckoutPage() {
   const { cart } = useContext(CartContext);
   const router = useRouter();
-  const [selectedAddress, setSelectedAddress] = useState(null); // In a real app, you'd fetch saved addresses
+
+  // State for addresses and the selected one
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddress, setSelectedAddress] = useState(null);
   const [deliverySlot, setDeliverySlot] = useState('');
 
+  // Fetch addresses when the component loads
+  useEffect(() => {
+    const fetchAddresses = async () => {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/address', { headers: { 'x-auth-token': token } });
+        if (res.ok) {
+            const data = await res.json();
+            setAddresses(data);
+            if (data.length > 0) {
+                setSelectedAddress(data[0]); // Default to the first address
+            }
+        }
+    };
+    fetchAddresses();
+  }, []);
+
   const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
-  const total = subtotal + 50; // Hardcoded delivery fee
+  const total = subtotal + 40; // Hardcoded delivery fee
 
   // ... inside the CheckoutPage component ...
 
 const handlePlaceOrder = async () => {
     if (!deliverySlot) {
-      alert('Please select a delivery slot.');
+      toast.error('Please select a delivery slot.');
       return;
     }
-    const shippingAddress = {
-      street: '123 Fresh St',
-      city: 'Groville',
-      pincode: '12345',
-    };
+    if (!selectedAddress) {
+      toast.error('Please select a shipping address.');
+      return;
+    }
     
     const token = localStorage.getItem('token');
     try {
@@ -34,25 +53,21 @@ const handlePlaceOrder = async () => {
           headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
           body: JSON.stringify({ shippingAddress, fixedDeliverySlot: deliverySlot }),
       });
-  
-      // This is the key change:
-      if (!res.ok) {
-        // If the response is not OK, get the error message from the backend
+
+      if (res.ok) {
+        toast.success('Order placed successfully!');
+        // In a real app, you would also clear the cart context here
+        router.push('/order-success');
+      } else {
         const errorData = await res.json();
-        throw new Error(errorData.msg || 'Failed to place order.');
+        throw new Error(errorData.msg || 'Failed to place order');
       }
-  
-      alert('Order placed successfully!');
-      router.push('/order-success');
-      
     } catch (error) {
       console.error(error);
-      // Now the alert will show the specific error from the backend
-      alert(`Error: ${error.message}`);
+      toast.error(`Error: ${error.message}`);
     }
   };
-  
-  // ... rest of the component
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -71,10 +86,18 @@ const handlePlaceOrder = async () => {
           </select>
 
           <h2 className="text-2xl font-semibold mt-8 mb-4">2. Shipping Address</h2>
-          <div className="p-4 border-2 border-blue-500 rounded-md bg-blue-50">
-            <p className="font-bold">Home</p>
-            <p>123 Fresh St, Groville, 12345</p>
-            <p className="text-sm text-gray-600 mt-2">Address selection UI would go here.</p>
+          <div className="space-y-4">
+            {addresses.map(addr => (
+                <div 
+                    key={addr._id} 
+                    onClick={() => setSelectedAddress(addr)}
+                    className={`p-4 border-2 rounded-md cursor-pointer ${selectedAddress?._id === addr._id ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}
+                >
+                    <p className="font-semibold">{addr.street}</p>
+                    <p>{addr.city}, {addr.state} - {addr.pincode}</p>
+                </div>
+            ))}
+            {addresses.length === 0 && <p>No saved addresses. Please add one in your account page.</p>}
           </div>
         </div>
 
