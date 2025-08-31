@@ -83,7 +83,7 @@ export default function RegisterPage() {
           
           {/* --- Conditional Input --- */}
           {method === 'email' ? (
-            <input type="email" value={credential} onChange={(e) => setCredential(e.g., t.value)} placeholder="Email Address" required className="w-full px-3 py-2 border rounded-md" />
+            <input type="email" value={credential} onChange={(e) => setCredential(e.target.value)} placeholder="Email Address" required className="w-full px-3 py-2 border rounded-md" />
           ) : (
             <input type="tel" value={credential} onChange={(e) => setCredential(e.target.value)} placeholder="Phone Number (with country code)" required className="w-full px-3 py-2 border rounded-md" />
           )}
