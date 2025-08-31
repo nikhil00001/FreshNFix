@@ -1,32 +1,48 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const validator = require('validator'); // 1. Import the validator library
-const User = require('../models/User'); // Import our User model
+const validator = require('validator');
+const { parsePhoneNumberFromString } = require('libphonenumber-js'); // 1. Import phone validator
+const User = require('../models/User');
 
 const router = express.Router();
 
-// --- Register a new user ---
-// Endpoint: POST /api/auth/register
+// --- Register a new user (Handles Email and Phone) ---
 router.post('/register', async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, credential, method, password } = req.body;
 
   try {
-    // 2. Add this validation check right at the beginning
-    if (!validator.isEmail(email)) {
-      return res.status(400).json({ msg: 'Please enter a valid email address.' });
+    let user;
+    // 2. Validate and check for existing user based on the method
+    if (method === 'email') {
+      if (!validator.isEmail(credential)) {
+        return res.status(400).json({ msg: 'Please enter a valid email address.' });
+      }
+      user = await User.findOne({ email: credential });
+    } else if (method === 'phone') {
+      const phoneNumber = parsePhoneNumberFromString(credential, 'IN'); // Assuming 'IN' for India
+      if (!phoneNumber || !phoneNumber.isValid()) {
+        return res.status(400).json({ msg: 'Please enter a valid phone number.' });
+      }
+      user = await User.findOne({ phone: phoneNumber.number });
+    } else {
+      return res.status(400).json({ msg: 'Invalid sign-up method.' });
     }
 
-    // Check if user already exists
-    let user = await User.findOne({ email });
     if (user) {
-      return res.status(400).json({ msg: 'User already exists' });
+      return res.status(400).json({ msg: 'User already exists with this credential.' });
     }
 
-    // Create a new user instance (password will be hashed by the pre-save hook)
-    user = new User({ name, email, password });
-    await user.save();
+    // 3. Create the new user with the correct field
+    const newUser = { name, password };
+    if (method === 'email') {
+      newUser.email = credential;
+    } else {
+      newUser.phone = credential;
+    }
 
+    user = new User(newUser);
+    await user.save();
     res.status(201).json({ msg: 'User registered successfully!' });
 
   } catch (err) {
@@ -35,22 +51,30 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// We will add the /login route here next!
-
-// ... existing code for register route ...
-
-// --- Login a user ---
-// Endpoint: POST /api/auth/login
+// --- Login a user (Handles Email and Phone) ---
 router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
-  
+    const { credential, password } = req.body;
+
     try {
-      // Check if user exists
-      const user = await User.findOne({ email });
-      if (!user) {
-        return res.status(400).json({ msg: 'Invalid credentials' });
-      }
-  
+        let query;
+        // 4. Determine if credential is email or phone for the DB query
+        if (validator.isEmail(credential)) {
+            query = { email: credential };
+        } else {
+            const phoneNumber = parsePhoneNumberFromString(credential, 'IN');
+            if (phoneNumber && phoneNumber.isValid()) {
+                query = { phone: phoneNumber.number };
+            } else {
+                return res.status(400).json({ msg: 'Invalid credential format' });
+            }
+        }
+        
+        const user = await User.findOne(query);
+        if (!user) {
+            return res.status(400).json({ msg: 'Invalid credentials' });
+        }
+
+        // ... JWT and password comparison logic remains the same ...
       // Compare submitted password with the stored hashed password
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {

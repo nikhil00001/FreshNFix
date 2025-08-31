@@ -3,57 +3,55 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 import validator from 'validator';
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
 export default function RegisterPage() {
+  const [method, setMethod] = useState('email'); // 'email' or 'phone'
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [credential, setCredential] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
 
-    // 2. Add the client-side validation check
-    if (!validator.isEmail(email)) {
-      setError('Please enter a valid email address.');
+    // --- Validation ---
+    if (method === 'email' && !validator.isEmail(credential)) {
+      toast.error('Please enter a valid email address.');
       return;
     }
+    if (method === 'phone') {
+      const phoneNumber = parsePhoneNumberFromString(credential, 'IN');
+      if (!phoneNumber || !phoneNumber.isValid()) {
+        toast.error('Please enter a valid phone number (e.g., +919876543210).');
+        return;
+      }
+    }
 
-    {/*if (!name || !email || !password) {
-      setError('All fields are required.');
-      return;
-    }*/}
-    //https://fresh-n-fix-server.vercel.app
+    const loadingToast = toast.loading('Creating your account...');
+
     try {
-      // Example of how to use it in your code
-      // Trigger new deploy
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const res = await fetch(`${apiUrl}/api/auth/register`, {
+      const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, credential, method, password }),
       });
 
       const data = await res.json();
+      toast.dismiss(loadingToast);
 
       if (!res.ok) {
         throw new Error(data.msg || 'Failed to register');
       }
       
-      setSuccess('Registration successful! Redirecting to login...');
-      
-      // Redirect to login page after a short delay
-      setTimeout(() => {
-        router.push('/login');
-      }, 2000);
+      toast.success('Registration successful! Please log in.');
+      router.push('/login');
 
     } catch (err) {
-      setError(err.message);
+      toast.dismiss(loadingToast);
+      toast.error(err.message);
     }
   };
 
@@ -61,77 +59,45 @@ export default function RegisterPage() {
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
         <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900">
-            Create your Account
-            </h2>
-            <p className="mt-2 text-sm text-gray-600">
-            Get your groceries <span className="font-semibold text-blue-600">Fresh</span>, on a <span className="font-semibold text-blue-600">Fixed</span> time.
-            </p>
+          <h2 className="text-3xl font-bold text-gray-900">Create an Account</h2>
         </div>
         
+        {/* --- Method Toggle UI --- */}
+        <div className="flex border border-gray-300 rounded-md p-1">
+          <button
+            onClick={() => { setMethod('email'); setCredential(''); }}
+            className={`w-1/2 py-2 rounded ${method === 'email' ? 'bg-blue-600 text-white' : 'text-gray-600'}`}
+          >
+            Email
+          </button>
+          <button
+            onClick={() => { setMethod('phone'); setCredential(''); }}
+            className={`w-1/2 py-2 rounded ${method === 'phone' ? 'bg-blue-600 text-white' : 'text-gray-600'}`}
+          >
+            Phone
+          </button>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-              Full Name
-            </label>
-            <input
-              id="name"
-              type="text"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Full Name" required className="w-full px-3 py-2 border rounded-md" />
+          
+          {/* --- Conditional Input --- */}
+          {method === 'email' ? (
+            <input type="email" value={credential} onChange={(e) => setCredential(e.g., t.value)} placeholder="Email Address" required className="w-full px-3 py-2 border rounded-md" />
+          ) : (
+            <input type="tel" value={credential} onChange={(e) => setCredential(e.target.value)} placeholder="Phone Number (with country code)" required className="w-full px-3 py-2 border rounded-md" />
+          )}
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email address
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required minLength="6" className="w-full px-3 py-2 border rounded-md" />
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              minLength="6"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-
-          {/* Display Messages */}
-          {error && <p className="text-sm text-center text-red-600">{error}</p>}
-          {success && <p className="text-sm text-center text-green-600">{success}</p>}
-
-          <div>
-            <button
-              type="submit"
-              className="w-full px-4 py-2 text-lg font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Sign Up
-            </button>
-          </div>
+          <button type="submit" className="w-full py-2 text-lg font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700">
+            Sign Up
+          </button>
         </form>
         
-        <p className="text-sm text-center text-gray-600">
+        <p className="text-sm text-center">
           Already have an account?{' '}
-          <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-            Log in
-          </Link>
+          <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">Log in</Link>
         </p>
       </div>
     </div>
