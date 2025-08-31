@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import validator from 'validator';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -17,10 +18,16 @@ export default function RegisterPage() {
     setError('');
     setSuccess('');
 
-    if (!name || !email || !password) {
-      setError('All fields are required.');
+    // 2. Add the client-side validation check
+    if (!validator.isEmail(email)) {
+      setError('Please enter a valid email address.');
       return;
     }
+
+    {/*if (!name || !email || !password) {
+      setError('All fields are required.');
+      return;
+    }*/}
     //https://fresh-n-fix-server.vercel.app
     try {
       // Example of how to use it in your code
