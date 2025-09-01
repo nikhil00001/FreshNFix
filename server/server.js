@@ -40,9 +40,5 @@ app.use('/api/address', require(path.join(__dirname, 'routes', 'address')));
 app.get('/api', (req, res) => {
   res.json({ message: "Hello from the FreshNFix API! 🚀" });
 });
-
-// We will add our /api/auth/register and /api/auth/login routes here later
-
-
 // --- 💡 SOLUTION: Instead of app.listen(), export the app for Vercel ---
 module.exports = app;
