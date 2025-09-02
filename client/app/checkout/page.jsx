@@ -13,22 +13,52 @@ export default function CheckoutPage() {
   const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [deliverySlot, setDeliverySlot] = useState('');
+  // NEW: State for the inline address form
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [newAddress, setNewAddress] = useState({ street: '', city: '', state: '', pincode: '', phone: '' });
+
 
   // Fetch addresses when the component loads
   useEffect(() => {
     const fetchAddresses = async () => {
         const token = localStorage.getItem('token');
-        const res = await fetch('/api/address', { headers: { 'x-auth-token': token } });
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        const res = await fetch(`${apiUrl}/api/address`, { headers: { 'x-auth-token': token } });
         if (res.ok) {
             const data = await res.json();
             setAddresses(data);
             if (data.length > 0) {
                 setSelectedAddress(data[0]); // Default to the first address
+            } else {
+                setShowAddressForm(true); // Show form if no addresses
             }
         }
     };
     fetchAddresses();
   }, []);
+
+  // NEW: Handler to submit the new address
+  const handleAddAddress = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const res = await fetch(`${apiUrl}/api/address`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+        body: JSON.stringify(newAddress)
+    });
+    if (res.ok) {
+        const updatedAddresses = await res.json();
+        setAddresses(updatedAddresses);
+        setSelectedAddress(updatedAddresses[0]); // Auto-select the new address
+        toast.success('Address added!');
+        setShowAddressForm(false);
+        setNewAddress({ street: '', city: '', state: '', pincode: '', phone: '' });
+    } else {
+        toast.error('Failed to add address.');
+    }
+  };
+
 
   const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
   const total = subtotal + 40; // Hardcoded delivery fee
@@ -97,7 +127,28 @@ const handlePlaceOrder = async () => {
                     <p>{addr.city}, {addr.state} - {addr.pincode}</p>
                 </div>
             ))}
-            {addresses.length === 0 && <p>No saved addresses. Please add one in your account page.</p>}
+            {/* NEW: Button to show the form */}
+            <button 
+              onClick={() => setShowAddressForm(!showAddressForm)} 
+              className="w-full text-center p-3 border-2 border-dashed rounded-md text-blue-600 font-semibold hover:bg-blue-50"
+            >
+              {showAddressForm ? 'Cancel' : '+ Add a New Address'}
+            </button>
+
+            {/* NEW: Inline form, shown conditionally */}
+            {showAddressForm && (
+              <form onSubmit={handleAddAddress} className="bg-white p-6 rounded-lg shadow-md border space-y-4">
+                <h3 className="font-semibold text-lg">Add a new address</h3>
+                <input name="street" value={newAddress.street} onChange={handleAddressChange} placeholder="Street, House No." className="w-full p-2 border rounded" required />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input name="city" value={newAddress.city} onChange={handleAddressChange} placeholder="City" className="w-full p-2 border rounded" required />
+                    <input name="state" value={newAddress.state} onChange={handleAddressChange} placeholder="State" className="w-full p-2 border rounded" required />
+                    <input name="pincode" value={newAddress.pincode} onChange={handleAddressChange} placeholder="Pincode" className="w-full p-2 border rounded" required />
+                </div>
+                <input name="phone" value={newAddress.phone} onChange={handleAddressChange} placeholder="Phone Number" className="w-full p-2 border rounded" required />
+                <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">Save Address</button>
+              </form>
+            )}
           </div>
         </div>
 

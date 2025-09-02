@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const validator = require('validator');
 const { parsePhoneNumberFromString } = require('libphonenumber-js'); // 1. Import phone validator
 const User = require('../models/User');
-const { otpStore } = require('./routes/otp'); // Import the otpStore
+const { otpStore } = require('./otp'); // Import the otpStore
 
 
 const router = express.Router();
