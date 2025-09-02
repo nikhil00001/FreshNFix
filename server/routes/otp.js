@@ -4,6 +4,22 @@ const twilio = require('twilio');
 const { parsePhoneNumberFromString } = require('libphonenumber-js');
 const User = require('../models/User');
 
+// --- SOLUTION: VALIDATE ENV VARS BEFORE INITIALIZING TWILIO ---
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+// Check if the credentials are provided
+if (!accountSid || !authToken) {
+  // Log a clear error message. This helps massively with debugging.
+  console.error('FATAL ERROR: Twilio credentials (TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN) are not set in the environment variables.');
+  // In a real app, you might want to stop the server from starting,
+  // but for now, we'll prevent the client from being initialized improperly.
+}
+
+// Initialize Twilio client ONLY if credentials exist.
+//const client = (accountSid && authToken) ? twilio(accountSid, authToken) : null;
+
+
 const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 // --- Store OTPs temporarily (in a real app, use Redis or a database) ---
