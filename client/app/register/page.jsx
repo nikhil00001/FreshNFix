@@ -117,10 +117,10 @@ export default function RegisterPage() {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {/*<form onSubmit={handleSubmit} className="space-y-6">
           <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Full Name" required className="w-full px-3 py-2 border rounded-md" />
           
-          {/* --- Conditional Input --- */}
+          {/* --- Conditional Input --- *-/}
           {method === 'email' ? (
             <input type="email" value={credential} onChange={(e) => setCredential(e.target.value)} placeholder="Email Address" required className="w-full px-3 py-2 border rounded-md" />
           ) : (
@@ -132,7 +132,7 @@ export default function RegisterPage() {
           <button type="submit" className="w-full py-2 text-lg font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700">
             Sign Up
           </button>
-        </form>
+        </form>*/}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {!otpSent && ( // Only show these fields before OTP is sent
