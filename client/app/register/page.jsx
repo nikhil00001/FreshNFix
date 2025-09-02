@@ -27,7 +27,8 @@ export default function RegisterPage() {
 
     const loadingToast = toast.loading('Sending OTP...');
     try {
-      const res = await fetch('/api/otp/send', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${apiUrl}/api/otp/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: credential })
