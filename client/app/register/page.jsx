@@ -12,10 +12,43 @@ export default function RegisterPage() {
   const [name, setName] = useState('');
   const [credential, setCredential] = useState('');
   const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false); // New state to control UI
   const router = useRouter();
+
+
+  const handleSendOtp = async () => {
+    // Validate phone number format before sending OTP
+    const phoneNumber = parsePhoneNumberFromString(credential, 'IN');
+    if (!phoneNumber || !phoneNumber.isValid()) {
+      toast.error('Please enter a valid phone number (e.g., +919876543210).');
+      return;
+    }
+
+    const loadingToast = toast.loading('Sending OTP...');
+    try {
+      const res = await fetch('/api/otp/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: credential })
+      });
+      const data = await res.json();
+      toast.dismiss(loadingToast);
+
+      if (!res.ok) throw new Error(data.msg);
+
+      toast.success('OTP sent to your phone!');
+      setOtpSent(true); // Show the OTP field
+
+    } catch (err) {
+      toast.dismiss(loadingToast);
+      toast.error(err.message);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
 
     // --- Validation ---
     if (method === 'email' && !validator.isEmail(credential)) {
@@ -29,6 +62,11 @@ export default function RegisterPage() {
         return;
       }
     }
+     // If the method is phone and we haven't sent an OTP yet, send it first.
+     if (method === 'phone' && !otpSent) {
+      handleSendOtp();
+      return;
+    }
 
     const loadingToast = toast.loading('Creating your account...');
 
@@ -37,7 +75,7 @@ export default function RegisterPage() {
       const res = await fetch(`${apiUrl}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, credential, method, password }),
+        body: JSON.stringify({ name, credential, method, password, otp }),
       });
 
       const data = await res.json();
@@ -93,6 +131,35 @@ export default function RegisterPage() {
 
           <button type="submit" className="w-full py-2 text-lg font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700">
             Sign Up
+          </button>
+        </form>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {!otpSent && ( // Only show these fields before OTP is sent
+            <>
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Full Name" required className="w-full px-3 py-2 border rounded-md" />
+          
+              {/* --- Conditional Input --- */}
+              {method === 'email' ? (
+                <input type="email" value={credential} onChange={(e) => setCredential(e.target.value)} placeholder="Email Address" required className="w-full px-3 py-2 border rounded-md" />
+              ) : (
+                <input type="tel" value={credential} onChange={(e) => setCredential(e.target.value)} placeholder="Phone Number (with country code)" required className="w-full px-3 py-2 border rounded-md" />
+              )}
+
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required minLength="6" className="w-full px-3 py-2 border rounded-md" />
+            </>
+          )}
+
+          {/* Show OTP field when otpSent is true */}
+          {otpSent && method === 'phone' && (
+            <div>
+              <p className="text-center text-sm text-gray-600 mb-2">An OTP was sent to {credential}. Please enter it below.</p>
+              <input type="text" value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="6-Digit OTP" required className="w-full px-3 py-2 border rounded-md text-center tracking-[0.5em]" maxLength="6" />
+            </div>
+          )}
+
+          <button type="submit" className="w-full py-2 text-lg font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700">
+            {method === 'phone' && !otpSent ? 'Send OTP' : 'Create Account'}
           </button>
         </form>
         

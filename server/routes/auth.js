@@ -4,12 +4,14 @@ const jwt = require('jsonwebtoken');
 const validator = require('validator');
 const { parsePhoneNumberFromString } = require('libphonenumber-js'); // 1. Import phone validator
 const User = require('../models/User');
+const { otpStore } = require('./routes/otp'); // Import the otpStore
+
 
 const router = express.Router();
 
 // --- Register a new user (Handles Email and Phone) ---
 router.post('/register', async (req, res) => {
-  const { name, credential, method, password } = req.body;
+  const { name, credential, method, password, otp } = req.body;
 
   try {
     let user;
@@ -32,6 +34,16 @@ router.post('/register', async (req, res) => {
     if (user) {
       return res.status(400).json({ msg: 'User already exists with this credential.' });
     }
+
+    // --- OTP Verification ---
+    const storedOtpData = otpStore[phoneNumber.number];
+    if (!storedOtpData || storedOtpData.otp !== otp) {
+      return res.status(400).json({ msg: 'Invalid OTP.' });
+    }
+    if (Date.now() > storedOtpData.expires) {
+      return res.status(400).json({ msg: 'OTP has expired.' });
+    }
+    // --- End of Verification ---
 
     // 3. Create the new user with the correct field
     const newUser = { name, password };

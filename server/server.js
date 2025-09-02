@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors'); // To allow communication between frontend and backend
 const mongoose = require('mongoose');
+const { router: otpRouter } = require('./routes/otp');
 const path = require('path');
 require('dotenv').config(); // Load environment variables from .env file
 
@@ -33,6 +34,7 @@ app.use('/api/cart', require(path.join(__dirname, 'routes', 'cart')));
 app.use('/api/orders', require(path.join(__dirname, 'routes', 'orders')));
 app.use('/api/wishlist', require(path.join(__dirname, 'routes', 'wishlist')));
 app.use('/api/address', require(path.join(__dirname, 'routes', 'address')));
+app.use('/api/otp', otpRouter);
 
 
 
