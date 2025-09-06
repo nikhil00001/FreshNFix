@@ -6,6 +6,7 @@ import CartContext from '@/context/CartContext';
 import { ShoppingCartIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'; // Import menu icons
 
 export default function Navbar() {
+  //hello this is pull request
   const { cartCount } = useContext(CartContext);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false); // State for the mobile menu
