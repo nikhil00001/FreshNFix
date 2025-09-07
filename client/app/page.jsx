@@ -52,10 +52,9 @@ export default async function HomePage() {
       {/*<h1 className="text-4xl font-extrabold text-center mb-2 text-gray-800">
         Fresh Picks For You
       </h1>*/}
-      // Find the "Our Fresh Picks" h2 tag
-<h2 className="text-2xl md:text-3xl font-bold mb-6 text-center text-gray-800" id="products">
-  Our Fresh Picks
-</h2>
+    <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center text-gray-800" id="products">
+      Our Fresh Picks
+    </h2>
       <p className="text-center text-gray-500 mb-8">
         Groceries delivered fresh from the farm to your door, on a fixed time.
       </p>

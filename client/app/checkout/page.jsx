@@ -81,7 +81,7 @@ const handlePlaceOrder = async () => {
       const res = await fetch(`${apiUrl}/api/orders`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-          body: JSON.stringify({ shippingAddress, fixedDeliverySlot: deliverySlot }),
+          body: JSON.stringify({ shippingAddress: selectedAddress, fixedDeliverySlot: deliverySlot }),
       });
 
       if (res.ok) {

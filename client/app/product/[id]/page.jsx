@@ -40,13 +40,11 @@ export default async function ProductDetailsPage({ params }) {
             </span>
           )}
           {/*<h1 className="text-4xl font-extrabold mt-4">{product.name}</h1>*/}
-          // Find the main h1 title
           <h1 className="text-3xl md:text-4xl font-extrabold mt-4">{product.name}</h1>
 
           <p className="text-lg text-gray-500 mt-2">{product.category}</p>
           {/*<p className="text-4xl font-bold my-6">*/}
 
-          // Find the price paragraph
           <p className="text-3xl md:text-4xl font-bold my-6">
             ₹{product.price}
             <span className="text-xl font-medium text-gray-500"> / {product.unit}</span>
