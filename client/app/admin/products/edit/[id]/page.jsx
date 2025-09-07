@@ -35,7 +35,8 @@ export default function EditProductPage() {
     // Add this line to see the token in the browser's console
   console.log('Token being sent for EDIT:', token);
     try {
-      const res = await fetch(`/api/products/${id}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${apiUrl}/api/products/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
         body: JSON.stringify(product),
