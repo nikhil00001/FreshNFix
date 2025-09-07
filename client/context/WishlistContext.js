@@ -12,7 +12,8 @@ export const WishlistProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const res = await fetch('/api/wishlist', {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+          const res = await fetch(`${apiUrl}/api/wishlist`, {
             headers: { 'x-auth-token': token },
           });
           if (res.ok) {
@@ -36,7 +37,8 @@ export const WishlistProvider = ({ children }) => {
     }
 
     try {
-        const res = await fetch(`/api/wishlist/toggle/${productId}`, {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        const res = await fetch(`${apiUrl}/api/wishlist/toggle/${productId}`, {
             method: 'POST',
             headers: { 'x-auth-token': token }
         });
