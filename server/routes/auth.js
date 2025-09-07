@@ -21,6 +21,16 @@ router.post('/register', async (req, res) => {
         return res.status(400).json({ msg: 'Please enter a valid email address.' });
       }
       user = await User.findOne({ email: credential });
+      // --- OTP Verification ---
+    const storedOtpData = otpStore[phoneNumber.number];
+    if (!storedOtpData || storedOtpData.otp !== otp) {
+      return res.status(400).json({ msg: 'Invalid OTP.' });
+    }
+    if (Date.now() > storedOtpData.expires) {
+      return res.status(400).json({ msg: 'OTP has expired.' });
+    }
+    // --- End of Verification ---
+
     } else if (method === 'phone') {
       const phoneNumber = parsePhoneNumberFromString(credential, 'IN'); // Assuming 'IN' for India
       if (!phoneNumber || !phoneNumber.isValid()) {
@@ -35,16 +45,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ msg: 'User already exists with this credential.' });
     }
 
-    // --- OTP Verification ---
-    const storedOtpData = otpStore[phoneNumber.number];
-    if (!storedOtpData || storedOtpData.otp !== otp) {
-      return res.status(400).json({ msg: 'Invalid OTP.' });
-    }
-    if (Date.now() > storedOtpData.expires) {
-      return res.status(400).json({ msg: 'OTP has expired.' });
-    }
-    // --- End of Verification ---
-
+    
     // 3. Create the new user with the correct field
     const newUser = { name, password };
     if (method === 'email') {
