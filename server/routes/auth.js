@@ -1,4 +1,4 @@
-const express = require('express');
+/*const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const validator = require('validator');
@@ -8,111 +8,81 @@ const { otpStore } = require('./otp'); // Import the otpStore
 
 
 const router = express.Router();
+*/
+const express = require('express');
+const router = express.Router();
+const jwt = require('jsonwebtoken');
+const { parsePhoneNumberFromString } = require('libphonenumber-js');
+const twilio = require('twilio');
+const User = require('../models/User');
 
-// --- Register a new user (Handles Email and Phone) ---
-router.post('/register', async (req, res) => {
-  const { name, credential, method, password, otp } = req.body;
+const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+const otpStore = {}; // Temporary in-memory store
 
+// --- Step 1: Send Login/Sign-up OTP ---
+router.post('/login-otp', async (req, res) => {
+  const { phone } = req.body;
+  const phoneNumber = parsePhoneNumberFromString(phone, 'IN');
+
+  if (!phoneNumber || !phoneNumber.isValid()) {
+    return res.status(400).json({ msg: 'Invalid phone number format.' });
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  
   try {
-    let user;
-    // 2. Validate and check for existing user based on the method
-    if (method === 'email') {
-      if (!validator.isEmail(credential)) {
-        return res.status(400).json({ msg: 'Please enter a valid email address.' });
-      }
-      user = await User.findOne({ email: credential });
-    } else if (method === 'phone') {
-      const phoneNumber = parsePhoneNumberFromString(credential, 'IN'); // Assuming 'IN' for India
-      if (!phoneNumber || !phoneNumber.isValid()) {
-        return res.status(400).json({ msg: 'Please enter a valid phone number.' });
-      }
-      user = await User.findOne({ phone: phoneNumber.number });
-    } else {
-      return res.status(400).json({ msg: 'Invalid sign-up method.' });
-    }
+    // Uncomment this for production to send real SMS
+    // await client.messages.create({
+    //   body: `Your FreshNFix verification code is: ${otp}`,
+    //   from: process.env.TWILIO_PHONE_NUMBER,
+    //   to: phoneNumber.number
+    // });
+    
+    console.log(`OTP for ${phoneNumber.number} is: ${otp}`); // For testing without sending SMS
 
-    if (user) {
-      return res.status(400).json({ msg: 'User already exists with this credential.' });
-    }
+    otpStore[phoneNumber.number] = { otp, expires: Date.now() + 300000 }; // Expires in 5 mins
+    res.status(200).json({ msg: 'OTP sent successfully.' });
 
-    // --- OTP Verification ---
-    const storedOtpData = otpStore[phoneNumber.number];
-    if (!storedOtpData || storedOtpData.otp !== otp) {
-      return res.status(400).json({ msg: 'Invalid OTP.' });
-    }
-    if (Date.now() > storedOtpData.expires) {
-      return res.status(400).json({ msg: 'OTP has expired.' });
-    }
-    // --- End of Verification ---
-
-    // 3. Create the new user with the correct field
-    const newUser = { name, password };
-    if (method === 'email') {
-      newUser.email = credential;
-    } else {
-      newUser.phone = credential;
-    }
-
-    user = new User(newUser);
-    await user.save();
-    res.status(201).json({ msg: 'User registered successfully!' });
-
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+  } catch (error) {
+    console.error('Twilio Error:', error);
+    res.status(500).json({ msg: 'Failed to send OTP.' });
   }
 });
 
-// --- Login a user (Handles Email and Phone) ---
-router.post('/login', async (req, res) => {
-    const { credential, password } = req.body;
+// --- Step 2: Verify OTP and Log In / Sign Up ---
+router.post('/verify-otp', async (req, res) => {
+  const { phone, otp } = req.body;
+  const phoneNumber = parsePhoneNumberFromString(phone, 'IN');
 
-    try {
-        let query;
-        // 4. Determine if credential is email or phone for the DB query
-        if (validator.isEmail(credential)) {
-            query = { email: credential };
-        } else {
-            const phoneNumber = parsePhoneNumberFromString(credential, 'IN');
-            if (phoneNumber && phoneNumber.isValid()) {
-                query = { phone: phoneNumber.number };
-            } else {
-                return res.status(400).json({ msg: 'Invalid credential format' });
-            }
-        }
-        
-        const user = await User.findOne(query);
-        if (!user) {
-            return res.status(400).json({ msg: 'Invalid credentials' });
-        }
+  if (!phoneNumber || !phoneNumber.isValid()) {
+    return res.status(400).json({ msg: 'Invalid phone number.' });
+  }
 
-        // ... JWT and password comparison logic remains the same ...
-      // Compare submitted password with the stored hashed password
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        return res.status(400).json({ msg: 'Invalid credentials' });
-      }
-  
-      // If credentials are correct, create a JWT
-      const payload = {
-        user: {
-          id: user.id, // This is the user's ID from the database
-        },
-      };
-  
-      jwt.sign(
-        payload,
-        process.env.JWT_SECRET,
-        { expiresIn: '5h' }, // Token expires in 5 hours
-        (err, token) => {
-          if (err) throw err;
-          res.json({ token }); // Send the token back to the client
-        }
-      );
-    } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server error');
+  const storedOtpData = otpStore[phoneNumber.number];
+  if (!storedOtpData || storedOtpData.otp !== otp || Date.now() > storedOtpData.expires) {
+    return res.status(400).json({ msg: 'Invalid or expired OTP.' });
+  }
+
+  try {
+    delete otpStore[phoneNumber.number]; // OTP is used, delete it
+
+    // Find user or create a new one
+    let user = await User.findOne({ phone: phoneNumber.number });
+    if (!user) {
+      user = new User({ phone: phoneNumber.number });
+      await user.save();
     }
-  });
+    
+    // Create JWT
+    const payload = { user: { id: user.id } };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' });
+
+    res.json({ token });
+
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
 
 module.exports = router;

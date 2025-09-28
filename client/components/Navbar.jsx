@@ -4,8 +4,11 @@ import Link from 'next/link';
 import { useContext, useEffect, useState } from 'react';
 import CartContext from '@/context/CartContext';
 import { ShoppingCartIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'; // Import menu icons
+import AuthContext from '@/context/AuthContext';
+
 
 export default function Navbar() {
+  const { openAuthModal } = useContext(AuthContext);
   const { cartCount } = useContext(CartContext);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false); // State for the mobile menu
@@ -59,9 +62,9 @@ export default function Navbar() {
                 </button>
               </div>
             ) : (
-              <Link href="/login" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+              <button onClick={openAuthModal} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                 Login
-              </Link>
+              </button>
             )}
           </div>
 
