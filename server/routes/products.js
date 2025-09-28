@@ -120,4 +120,31 @@ router.get('/category/:categoryName', async (req, res) => {
   }
 });
 
+// ... existing routes ...
+
+// --- Reorder products (Admin Only) ---
+// Endpoint: POST /api/products/reorder
+router.post('/reorder', [auth, admin], async (req, res) => {
+  const { orderedIds } = req.body; // Expecting an array of product IDs in the new order
+
+  if (!Array.isArray(orderedIds)) {
+    return res.status(400).json({ msg: 'Invalid data format.' });
+  }
+
+  try {
+    // Create an array of update operations
+    const updatePromises = orderedIds.map((id, index) => {
+      return Product.findByIdAndUpdate(id, { position: index });
+    });
+
+    // Execute all update operations in parallel
+    await Promise.all(updatePromises);
+
+    res.json({ msg: 'Product order updated successfully.' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;
