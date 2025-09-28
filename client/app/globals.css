@@ -24,3 +24,18 @@
     @apply text-white;
   }
 }
+
+/* Fix for the footer not sticking to the bottom */
+html,
+body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex-grow: 1;
+}
