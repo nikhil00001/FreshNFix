@@ -44,6 +44,10 @@ export default function Navbar() {
 
             {isLoggedIn ? (
               <div className="flex items-center space-x-4">
+                {/* Add the new Wishlist link here */}
+                <Link href="/wishlist" className="text-gray-600 hover:text-blue-600 font-medium">
+                  Wishlist
+                </Link>
                 <Link href="/account" className="text-gray-600 hover:text-blue-600 font-medium">
                   My Account
                 </Link>
@@ -84,6 +88,10 @@ export default function Navbar() {
           <div className="px-4 py-4 flex flex-col space-y-4">
             {isLoggedIn ? (
               <>
+                {/* Also add the Wishlist link to the mobile menu */}
+                <Link href="/wishlist" className="text-gray-800 hover:text-blue-600 font-medium" onClick={() => setIsMenuOpen(false)}>
+                    Wishlist
+                </Link>
                 <Link href="/account" className="text-gray-800 hover:text-blue-600 font-medium" onClick={() => setIsMenuOpen(false)}>
                   My Account
                 </Link>
