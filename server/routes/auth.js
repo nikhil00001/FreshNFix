@@ -31,14 +31,13 @@ router.post('/login-otp', async (req, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   
   try {
-    // Uncomment this for production to send real SMS
-    // await client.messages.create({
-    //   body: `Your FreshNFix verification code is: ${otp}`,
-    //   from: process.env.TWILIO_PHONE_NUMBER,
-    //   to: phoneNumber.number
-    // });
+     await client.messages.create({
+       body: `Your FreshNFix verification code is: ${otp}`,
+       from: process.env.TWILIO_PHONE_NUMBER,
+       to: phoneNumber.number
+     });
     
-    console.log(`OTP for ${phoneNumber.number} is: ${otp}`); // For testing without sending SMS
+    // console.log(`OTP for ${phoneNumber.number} is: ${otp}`); // For testing without sending SMS
 
     otpStore[phoneNumber.number] = { otp, expires: Date.now() + 300000 }; // Expires in 5 mins
     res.status(200).json({ msg: 'OTP sent successfully.' });
