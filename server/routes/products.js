@@ -1,8 +1,9 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const Product = require('../models/Product');
-const auth = require('../middleware/auth'); // Import auth middleware
-const admin = require('../middleware/admin'); // Import admin middleware
+import Product from '../models/Product.js';
+import cognitoAuth from '../middleware/cognitoAuth.js';
+import admin from '../middleware/admin.js';
+
 
 
 // --- Get all products ---
@@ -80,7 +81,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // --- Update a product (Admin Only) ---
-router.put('/:id', [auth, admin], async (req, res) => {
+router.put('/:id', [cognitoAuth, admin], async (req, res) => {
   try {
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!product) return res.status(404).json({ msg: 'Product not found' });
@@ -92,7 +93,7 @@ router.put('/:id', [auth, admin], async (req, res) => {
 });
 
 // --- Delete a product (Admin Only) ---
-router.delete('/:id', [auth, admin], async (req, res) => {
+router.delete('/:id', [cognitoAuth, admin], async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) return res.status(404).json({ msg: 'Product not found' });
@@ -124,7 +125,7 @@ router.get('/category/:categoryName', async (req, res) => {
 
 // --- Reorder products (Admin Only) ---
 // Endpoint: POST /api/products/reorder
-router.post('/reorder', [auth, admin], async (req, res) => {
+router.post('/reorder', [cognitoAuth, admin], async (req, res) => {
   const { orderedIds } = req.body; // Expecting an array of product IDs in the new order
 
   if (!Array.isArray(orderedIds)) {
@@ -147,4 +148,4 @@ router.post('/reorder', [auth, admin], async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

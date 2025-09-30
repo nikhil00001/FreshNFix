@@ -1,57 +1,62 @@
-const express = require('express');
-const cors = require('cors'); // To allow communication between frontend and backend
-const mongoose = require('mongoose');
-const { router: otpRouter } = require('./routes/otp');
-const path = require('path');
-require('dotenv').config(); // Load environment variables from .env file
+// --- 💡 FIX 1: Convert all `require` to `import` ---
+import express from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+
+// --- 💡 FIX 2: Import all your route files using the `import` syntax ---
+import { startAuth, verifyOtp } from './routes/auth.js';
+import productsRouter from './routes/products.js';
+import cartRouter from './routes/cart.js';
+import ordersRouter from './routes/orders.js';
+import wishlistRouter from './routes/wishlist.js';
+import addressRouter from './routes/address.js';
+
+// --- This line initializes your environment variables ---
+dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5001; // We'll use port 5001 for the backend
+const PORT = process.env.PORT || 5001;
 
-
-// --- 💡 SOLUTION: Configure CORS to only allow your frontend URL ---
-// List of allowed origins
+// Your CORS and middleware setup is correct, no changes needed here.
 const allowedOrigins = [
-  'https://fresh-n-fix.vercel.app', // Your deployed frontend
-  'http://localhost:3000'           // Your local development frontend
+  'https://fresh-n-fix.vercel.app',
+  'http://localhost:3000'
 ];
-
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
     }
-    return callback(null, true);
   },
-  optionsSuccessStatus: 200 // For legacy browser support
 };
-// Middleware
-app.use(cors(corsOptions)); // Enable Cross-Origin Resource Sharing
-app.use(express.json()); // Allow server to accept JSON data in requests
+app.use(cors(corsOptions));
+app.use(express.json());
 
-// --- Connect to MongoDB ---
+// --- MongoDB Connection ---
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected successfully!"))
   .catch(err => console.error("MongoDB connection error:", err));
-  // --- End of Connection ---
 
+// --- 💡 FIX 3: Register all your imported routers ---
+// New Cognito auth routes
+app.post('/api/auth/start', startAuth);
+app.post('/api/auth/verify', verifyOtp);
 
-app.use('/api/auth', require(path.join(__dirname, 'routes', 'auth')));
-app.use('/api/products', require(path.join(__dirname, 'routes', 'products')));
-app.use('/api/cart', require(path.join(__dirname, 'routes', 'cart')));
-app.use('/api/orders', require(path.join(__dirname, 'routes', 'orders')));
-app.use('/api/wishlist', require(path.join(__dirname, 'routes', 'wishlist')));
-app.use('/api/address', require(path.join(__dirname, 'routes', 'address')));
-app.use('/api/otp', otpRouter);
-
-
+// The rest of your application routes
+app.use('/api/products', productsRouter);
+app.use('/api/cart', cartRouter);
+app.use('/api/orders', ordersRouter);
+app.use('/api/wishlist', wishlistRouter);
+app.use('/api/address', addressRouter);
 
 // A simple test route to make sure the server is running
 app.get('/api', (req, res) => {
   res.json({ message: "Hello from the FreshNFix API! 🚀" });
 });
-// --- 💡 SOLUTION: Instead of app.listen(), export the app for Vercel ---
-module.exports = app;
+
+// For Vercel deployment, we export the app instead of listening.
+// If you want to run it locally, you can add app.listen(PORT, ...)
+export default app;

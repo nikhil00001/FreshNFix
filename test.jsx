@@ -1,51 +1,64 @@
-// ... imports ...
+// --- 💡 FIX 1: Convert all `require` to `import` ---
+import express from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
 
-export default function AuthModal() {
-  // ... state variables (step, phone, otp) ...
-  const [session, setSession] = useState(null); // NEW: To store the Cognito session
+// --- 💡 FIX 2: Import all your route files using the `import` syntax ---
+import { startAuth, verifyOtp } from './routes/auth.js';
+import productsRouter from './routes/products.js';
+import cartRouter from './routes/cart.js';
+import ordersRouter from './routes/orders.js';
+import wishlistRouter from './routes/wishlist.js';
+import addressRouter from './routes/address.js';
+import { router as otpRouter } from './routes/otp.js';
 
-  const handleSendOtp = async () => {
-    // ... validation ...
-    const loadingToast = toast.loading('Sending OTP...');
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: `+91${phone}` })
-      });
-      const data = await res.json();
-      toast.dismiss(loadingToast);
-      if (!res.ok) throw new Error(data.msg);
+// --- This line initializes your environment variables ---
+dotenv.config();
 
-      setSession(data.session); // Save the session for the next step
-      toast.success('OTP sent!');
-      setStep(2);
+const app = express();
+const PORT = process.env.PORT || 5001;
 
-    } catch (err) {
-        // ... error handling
+// Your CORS and middleware setup is correct, no changes needed here.
+const allowedOrigins = [
+  'https://fresh-n-fix.vercel.app',
+  'http://localhost:3000'
+];
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
     }
-  };
-  
-  const handleVerifyOtp = async () => {
-    // ... validation ...
-    const loadingToast = toast.loading('Verifying OTP...');
-    try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone: `+91${phone}`, otp, session }) // Send the session
-        });
-        const data = await res.json();
-        toast.dismiss(loadingToast);
-        if (!res.ok) throw new Error(data.msg);
-        
-        toast.success('Logged in successfully!');
-        localStorage.setItem('token', data.token); // The token is now from Cognito
-        window.location.reload();
-    } catch (err) {
-        // ... error handling
-    }
-  };
+  },
+};
+app.use(cors(corsOptions));
+app.use(express.json());
 
-  // ... rest of the component is the same ...
-}
+// --- MongoDB Connection ---
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected successfully!"))
+  .catch(err => console.error("MongoDB connection error:", err));
+
+// --- 💡 FIX 3: Register all your imported routers ---
+// New Cognito auth routes
+app.post('/api/auth/start', startAuth);
+app.post('/api/auth/verify', verifyOtp);
+
+// The rest of your application routes
+app.use('/api/products', productsRouter);
+app.use('/api/cart', cartRouter);
+app.use('/api/orders', ordersRouter);
+app.use('/api/wishlist', wishlistRouter);
+app.use('/api/address', addressRouter);
+app.use('/api/otp', otpRouter);
+
+// A simple test route to make sure the server is running
+app.get('/api', (req, res) => {
+  res.json({ message: "Hello from the FreshNFix API! 🚀" });
+});
+
+// For Vercel deployment, we export the app instead of listening.
+// If you want to run it locally, you can add app.listen(PORT, ...)
+export default app;

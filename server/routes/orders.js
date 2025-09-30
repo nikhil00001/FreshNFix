@@ -1,14 +1,14 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const auth = require('../middleware/auth');
-const admin = require('../middleware/admin');
-const Order = require('../models/Order');
-const User = require('../models/User');
+import cognitoAuth from '../middleware/cognitoAuth.js';
+import admin from '../middleware/admin.js';
+import Order from '../models/Order.js';
+import User from '../models/User.js';
 
 // --- Place a new order ---
 // Endpoint: POST /api/orders
 // Access: Private
-router.post('/', auth, async (req, res) => {
+router.post('/', cognitoAuth, async (req, res) => {
   const { shippingAddress, fixedDeliverySlot } = req.body;
 
   try {
@@ -54,7 +54,7 @@ router.post('/', auth, async (req, res) => {
 // --- Get orders for the logged-in user ---
 // Endpoint: GET /api/orders/myorders
 // Access: Private
-router.get('/myorders', auth, async (req, res) => {
+router.get('/myorders', cognitoAuth, async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user.id }).populate('items.product').sort({ createdAt: -1 });
     res.json(orders);
@@ -68,7 +68,7 @@ router.get('/myorders', auth, async (req, res) => {
 
 // --- Get all orders (Admin Only) ---
 // Endpoint: GET /api/orders/all
-router.get('/all', [auth, admin], async (req, res) => {
+router.get('/all', [cognitoAuth, admin], async (req, res) => {
   try {
     // Populate user's name and email to show in the admin panel
     const orders = await Order.find().populate('user', 'name email').populate('items.product').sort({ createdAt: -1 });
@@ -81,7 +81,7 @@ router.get('/all', [auth, admin], async (req, res) => {
 
 // --- Update order status (Admin Only) ---
 // Endpoint: PUT /api/orders/status/:id
-router.put('/status/:id', [auth, admin], async (req, res) => {
+router.put('/status/:id', [cognitoAuth, admin], async (req, res) => {
   const { status } = req.body;
   try {
     const order = await Order.findById(req.params.id);
@@ -98,4 +98,4 @@ router.put('/status/:id', [auth, admin], async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

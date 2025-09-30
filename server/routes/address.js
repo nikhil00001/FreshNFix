@@ -1,11 +1,11 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const auth = require('../middleware/auth');
-const User = require('../models/User');
+import cognitoAuth from '../middleware/cognitoAuth.js';
+import User from '../models/User.js';
 
 // --- Get all of a user's addresses ---
 // Endpoint: GET /api/address
-router.get('/', auth, async (req, res) => {
+router.get('/', cognitoAuth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('addresses');
     res.json(user.addresses);
@@ -17,7 +17,7 @@ router.get('/', auth, async (req, res) => {
 
 // --- Add a new address ---
 // Endpoint: POST /api/address
-router.post('/', auth, async (req, res) => {
+router.post('/', cognitoAuth, async (req, res) => {
   const { street, city, state, pincode, phone } = req.body;
   
   const newAddress = { street, city, state, pincode, phone };
@@ -35,7 +35,7 @@ router.post('/', auth, async (req, res) => {
 
 // --- Delete an address ---
 // Endpoint: DELETE /api/address/:id
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', cognitoAuth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     // Find the index of the address to remove
@@ -53,4 +53,4 @@ router.delete('/:id', auth, async (req, res) => {
 });
 
 
-module.exports = router;
+export default router;

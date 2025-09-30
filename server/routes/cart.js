@@ -1,12 +1,12 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const auth = require('../middleware/auth'); // Import our auth middleware
-const User = require('../models/User');
+import cognitoAuth from '../middleware/cognitoAuth.js';
+import User from '../models/User.js';
 
 // --- Add an item to the cart ---
 // Endpoint: POST /api/cart/add
 // Access: Private (requires token)
-router.post('/add', auth, async (req, res) => {
+router.post('/add', cognitoAuth, async (req, res) => {
     const { productId, quantity } = req.body;
     
     try {
@@ -38,7 +38,7 @@ router.post('/add', auth, async (req, res) => {
 // --- Get user's cart ---
 // Endpoint: GET /api/cart
 // Access: Private
-router.get('/', auth, async (req, res) => {
+router.get('/', cognitoAuth, async (req, res) => {
     try {
         const user = await User.findById(req.user.id).populate('cart.product');
         if (!user) {
@@ -56,7 +56,7 @@ router.get('/', auth, async (req, res) => {
 // --- Update item quantity ---
 // Endpoint: POST /api/cart/update
 // Access: Private
-router.post('/update', auth, async (req, res) => {
+router.post('/update', cognitoAuth, async (req, res) => {
     const { productId, quantity } = req.body;
     try {
         const user = await User.findById(req.user.id);
@@ -83,7 +83,7 @@ router.post('/update', auth, async (req, res) => {
 // --- Remove item from cart ---
 // Endpoint: DELETE /api/cart/remove/:productId
 // Access: Private
-router.delete('/remove/:productId', auth, async (req, res) => {
+router.delete('/remove/:productId', cognitoAuth, async (req, res) => {
     try {
         await User.updateOne(
             { _id: req.user.id },
@@ -98,4 +98,4 @@ router.delete('/remove/:productId', auth, async (req, res) => {
 });
 
 
-module.exports = router;
+export default router;

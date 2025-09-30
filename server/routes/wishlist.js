@@ -1,11 +1,11 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const auth = require('../middleware/auth');
-const User = require('../models/User');
+import cognitoAuth from '../middleware/cognitoAuth.js';
+import User from '../models/User.js';
 
 // --- Get user's wishlist ---
 // Endpoint: GET /api/wishlist
-router.get('/', auth, async (req, res) => {
+router.get('/', cognitoAuth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('wishlist').populate('wishlist');
     res.json(user.wishlist);
@@ -17,7 +17,7 @@ router.get('/', auth, async (req, res) => {
 
 // --- Add/Remove an item from the wishlist (toggle) ---
 // Endpoint: POST /api/wishlist/toggle/:productId
-router.post('/toggle/:productId', auth, async (req, res) => {
+router.post('/toggle/:productId', cognitoAuth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     const productId = req.params.productId;
@@ -42,4 +42,4 @@ router.post('/toggle/:productId', auth, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
