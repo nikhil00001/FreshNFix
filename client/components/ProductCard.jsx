@@ -49,6 +49,7 @@ export default function ProductCard({ product }) {
       <div className="px-4 pb-4 flex items-center justify-between">
         <p className="text-xl font-bold text-gray-900">
           ₹{product.price}
+          <span className="text-xl font-medium text-gray-500"> / {product.unit}</span>
         </p>
         <button 
           onClick={() => addToCart(product._id)}

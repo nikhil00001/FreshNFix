@@ -1,87 +1,80 @@
-/*const express = require('express');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const validator = require('validator');
-const { parsePhoneNumberFromString } = require('libphonenumber-js'); // 1. Import phone validator
-const User = require('../models/User');
-const { otpStore } = require('./otp'); // Import the otpStore
+import { CognitoIdentityProviderClient, SignUpCommand, InitiateAuthCommand, RespondToAuthChallengeCommand } from "@aws-sdk/client-cognito-identity-provider";
+import User from "../models/User.js"; // Your MongoDB User model
 
+const cognitoClient = new CognitoIdentityProviderClient({ region: "YOUR_AWS_REGION" }); // e.g., "ap-south-1"
 
-const router = express.Router();
-*/
-const express = require('express');
-const router = express.Router();
-const jwt = require('jsonwebtoken');
-const { parsePhoneNumberFromString } = require('libphonenumber-js');
-const twilio = require('twilio');
-const User = require('../models/User');
+// --- Step 1: Initiate Sign-Up / Sign-In with Phone ---
+// This will either start the sign-up process or the login process if the user exists.
+// Cognito handles sending the OTP via SNS.
+const startAuth = async (req, res) => {
+    const { phone } = req.body;
+    const clientId = process.env.COGNITO_APP_CLIENT_ID;
 
-const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-const otpStore = {}; // Temporary in-memory store
-
-// --- Step 1: Send Login/Sign-up OTP ---
-router.post('/login-otp', async (req, res) => {
-  const { phone } = req.body;
-  const phoneNumber = parsePhoneNumberFromString(phone, 'IN');
-
-  if (!phoneNumber || !phoneNumber.isValid()) {
-    return res.status(400).json({ msg: 'Invalid phone number format.' });
-  }
-
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  
-  try {
-     await client.messages.create({
-       body: `Your FreshNFix verification code is: ${otp}`,
-       from: process.env.TWILIO_PHONE_NUMBER,
-       to: phoneNumber.number
-     });
-    
-    // console.log(`OTP for ${phoneNumber.number} is: ${otp}`); // For testing without sending SMS
-
-    otpStore[phoneNumber.number] = { otp, expires: Date.now() + 300000 }; // Expires in 5 mins
-    res.status(200).json({ msg: 'OTP sent successfully.' });
-
-  } catch (error) {
-    console.error('Twilio Error:', error);
-    res.status(500).json({ msg: 'Failed to send OTP.' });
-  }
-});
-
-// --- Step 2: Verify OTP and Log In / Sign Up ---
-router.post('/verify-otp', async (req, res) => {
-  const { phone, otp } = req.body;
-  const phoneNumber = parsePhoneNumberFromString(phone, 'IN');
-
-  if (!phoneNumber || !phoneNumber.isValid()) {
-    return res.status(400).json({ msg: 'Invalid phone number.' });
-  }
-
-  const storedOtpData = otpStore[phoneNumber.number];
-  if (!storedOtpData || storedOtpData.otp !== otp || Date.now() > storedOtpData.expires) {
-    return res.status(400).json({ msg: 'Invalid or expired OTP.' });
-  }
-
-  try {
-    delete otpStore[phoneNumber.number]; // OTP is used, delete it
-
-    // Find user or create a new one
-    let user = await User.findOne({ phone: phoneNumber.number });
-    if (!user) {
-      user = new User({ phone: phoneNumber.number });
-      await user.save();
+    try {
+        // We first try to sign up the user. If they already exist, Cognito will throw an error
+        // which we catch and then proceed with the login flow.
+        const signUpParams = {
+            ClientId: clientId,
+            Username: phone,
+            Password: `aB1!${Date.now()}`, // A dummy password, as we use OTP
+            UserAttributes: [{ Name: "phone_number", Value: phone }],
+        };
+        await cognitoClient.send(new SignUpCommand(signUpParams));
+    } catch (err) {
+        if (err.name !== "UsernameExistsException") {
+            console.error("Cognito SignUp Error:", err);
+            return res.status(500).json({ msg: "Authentication failed" });
+        }
+        // If user exists, we continue to the login flow below.
     }
-    
-    // Create JWT
-    const payload = { user: { id: user.id } };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' });
 
-    res.json({ token });
+    // Now, initiate the authentication flow which will send the OTP
+    try {
+        const authParams = {
+            ClientId: clientId,
+            AuthFlow: "CUSTOM_AUTH",
+            AuthParameters: { USERNAME: phone },
+        };
+        const response = await cognitoClient.send(new InitiateAuthCommand(authParams));
+        res.status(200).json({ session: response.Session, msg: "OTP sent successfully." });
+    } catch (err) {
+        console.error("Cognito InitiateAuth Error:", err);
+        res.status(500).json({ msg: "Failed to send OTP." });
+    }
+};
 
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
-  }
-});
+// --- Step 2: Verify the OTP and Get Tokens ---
+const verifyOtp = async (req, res) => {
+    const { phone, otp, session } = req.body;
+    const clientId = process.env.COGNITO_APP_CLIENT_ID;
 
-module.exports = router;
+    const params = {
+        ClientId: clientId,
+        ChallengeName: "CUSTOM_CHALLENGE",
+        Session: session,
+        ChallengeResponses: {
+            USERNAME: phone,
+            ANSWER: otp,
+        },
+    };
+
+    try {
+        const response = await cognitoClient.send(new RespondToAuthChallengeCommand(params));
+        const accessToken = response.AuthenticationResult.AccessToken;
+        const cognitoUserId = response.AuthenticationResult.IdTokenPayload.sub;
+
+        // Check if user exists in our MongoDB, if not, create them
+        let user = await User.findOne({ phone: phone });
+        if (!user) {
+            user = new User({ phone: phone, cognitoId: cognitoUserId }); // Link to Cognito user
+            await user.save();
+        }
+
+        res.json({ token: accessToken }); // Send the Cognito Access Token to the client
+    } catch (err) {
+        console.error("Cognito VerifyOTP Error:", err);
+        res.status(400).json({ msg: "Invalid or expired OTP." });
+    }
+};
+
+export { startAuth, verifyOtp };

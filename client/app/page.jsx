@@ -29,7 +29,7 @@ export default async function HomePage() {
 
    // Define our categories for the new section
    const categories = [
-    { name: 'Fruits & Vegetables', slug: 'fruits-vegetables', icon: <FireIcon className="h-8 w-8"/> },
+    { name: 'Vegetables', slug: 'fruits-vegetables', icon: <FireIcon className="h-8 w-8"/> },
     { name: 'Dairy & Eggs', slug: 'dairy-eggs', icon: <BeakerIcon className="h-8 w-8"/> },
     { name: 'Bakery', slug: 'bakery', icon: <CakeIcon className="h-8 w-8"/> },
     { name: 'Pantry Staples', slug: 'pantry-staples', icon: <ShoppingBagIcon className="h-8 w-8"/> },

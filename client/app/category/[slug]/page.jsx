@@ -14,7 +14,8 @@ async function getCategoryProducts(slug) {
     // Our slugs are like "dairy-eggs", but our categories are "Dairy & Eggs"
     // We'll pass the raw category name to the API.
     const categoryName = slug.replace('-', ' & '); 
-    const res = await fetch(`http://localhost:5001/api/products/category/${encodeURIComponent(categoryName)}`, {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+    const res = await fetch(`${apiUrl}/api/products/category/${encodeURIComponent(categoryName)}`, {
       cache: 'no-store',
     });
     if (!res.ok) throw new Error('Failed to fetch products');
