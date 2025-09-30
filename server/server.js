@@ -33,10 +33,7 @@ app.use(cors(corsOptions)); // Enable Cross-Origin Resource Sharing
 app.use(express.json()); // Allow server to accept JSON data in requests
 
 // --- Connect to MongoDB ---
-mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected successfully!"))
   .catch(err => console.error("MongoDB connection error:", err));
   // --- End of Connection ---
