@@ -1,7 +1,7 @@
 import { CognitoIdentityProviderClient, SignUpCommand, InitiateAuthCommand, RespondToAuthChallengeCommand } from "@aws-sdk/client-cognito-identity-provider";
 import User from "../models/User.js"; // Your MongoDB User model
 
-const cognitoClient = new CognitoIdentityProviderClient({ region: "us-east-1" }); // e.g., "ap-south-1"
+const cognitoClient = new CognitoIdentityProviderClient({ region: "ap-south-1" }); // e.g., "ap-south-1"
 
 // --- Step 1: Initiate Sign-Up / Sign-In with Phone ---
 // This will either start the sign-up process or the login process if the user exists.

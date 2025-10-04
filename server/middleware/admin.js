@@ -1,7 +1,7 @@
 import { CognitoIdentityProviderClient, AdminGetUserCommand } from "@aws-sdk/client-cognito-identity-provider";
 import User from '../models/User.js'; // Your MongoDB User model
 
-const cognitoClient = new CognitoIdentityProviderClient({ region: "us-east-1" });
+const cognitoClient = new CognitoIdentityProviderClient({ region: "ap-south-1" });
 
 const admin = async (req, res, next) => {
   try {
