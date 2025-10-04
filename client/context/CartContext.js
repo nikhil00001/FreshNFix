@@ -22,7 +22,7 @@ export const CartProvider = ({ children }) => {
         try {
           const apiUrl = process.env.NEXT_PUBLIC_API_URL;
           const res = await fetch(`${apiUrl}/api/cart`, {
-            headers: { 'x-auth-token': token },
+            headers: { 'Authorization': `Bearer ${token}` },
           });
           if (res.ok) {
             const data = await res.json();
@@ -52,7 +52,7 @@ export const CartProvider = ({ children }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-auth-token': token
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ productId, quantity: 1 })
       });
@@ -75,7 +75,7 @@ export const CartProvider = ({ children }) => {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       const res = await fetch(`${apiUrl}/api/cart/update`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ productId, quantity }),
       });
       if (res.ok) {
@@ -93,7 +93,7 @@ export const CartProvider = ({ children }) => {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       const res = await fetch(`${apiUrl}/api/cart/remove/${productId}`, {
         method: 'DELETE',
-        headers: { 'x-auth-token': token },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
       if (res.ok) {
         const updatedCart = await res.json();

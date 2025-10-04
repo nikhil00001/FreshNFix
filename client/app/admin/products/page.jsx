@@ -88,7 +88,7 @@ export default function AdminProductsPage() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       const res = await fetch(`${apiUrl}/api/products/${productId}`, {
         method: 'DELETE',
-        headers: { 'x-auth-token': token },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
 
       if (res.ok) {
@@ -121,7 +121,7 @@ export default function AdminProductsPage() {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         const res = await fetch(`${apiUrl}/api/products/reorder`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({ orderedIds }),
         });
         if (!res.ok) throw new Error('Failed to save order.');

@@ -22,8 +22,8 @@ export default function AccountPage() {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         const [ordersRes, addressesRes] = await Promise.all([
-          fetch(`${apiUrl}/api/orders/myorders`, { headers: { 'x-auth-token': token } }),
-          fetch(`${apiUrl}/api/address`, { headers: { 'x-auth-token': token } })
+          fetch(`${apiUrl}/api/orders/myorders`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${apiUrl}/api/address`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
         const ordersData = await ordersRes.json();
         const addressesData = await addressesRes.json();
@@ -48,7 +48,7 @@ export default function AccountPage() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     const res = await fetch(`${apiUrl}/api/address`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(newAddress)
     });
     if (res.ok) {

@@ -12,7 +12,7 @@ export default function AdminOrdersPage() {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         const res = await fetch(`{apiUrl}/api/orders/all`, {
-          headers: { 'x-auth-token': token },
+          headers: { 'Authorization': `Bearer ${token}` },
         });
         if (res.ok) {
           const data = await res.json();
@@ -35,7 +35,7 @@ export default function AdminOrdersPage() {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'x-auth-token': token
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({ status: newStatus })
         });
