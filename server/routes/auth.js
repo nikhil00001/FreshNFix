@@ -43,7 +43,8 @@ const startAuth = async (req, res) => {
     }
 };
 
-// --- Step 2: Verify the OTP and Get Tokens ---
+
+// --- Step 2: Verify the OTP and Get Tokens (Corrected) ---
 const verifyOtp = async (req, res) => {
     const { phone, otp, session } = req.body;
     const clientId = process.env.COGNITO_APP_CLIENT_ID;
@@ -60,13 +61,24 @@ const verifyOtp = async (req, res) => {
 
     try {
         const response = await cognitoClient.send(new RespondToAuthChallengeCommand(params));
+        
+        // --- 💡 START OF FIX ---
+        // The IdToken is an encoded string. We need to decode it.
+        const idToken = response.AuthenticationResult.IdToken;
+        
+        // The middle part of the token is the payload, which is Base64 encoded.
+        const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString());
+        
+        // Now we can safely get the user's unique ID ('sub').
+        const cognitoUserId = payload.sub;
         const accessToken = response.AuthenticationResult.AccessToken;
-        const cognitoUserId = response.AuthenticationResult.IdTokenPayload.sub;
+        // --- 💡 END OF FIX ---
 
         // Check if user exists in our MongoDB, if not, create them
         let user = await User.findOne({ phone: phone });
         if (!user) {
-            user = new User({ phone: phone, cognitoId: cognitoUserId }); // Link to Cognito user
+            // We can also add the Cognito ID to our local user for future reference
+            user = new User({ phone: phone, cognitoId: cognitoUserId }); 
             await user.save();
         }
 
