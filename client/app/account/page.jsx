@@ -22,8 +22,8 @@ export default function AccountPage() {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         const [ordersRes, addressesRes] = await Promise.all([
-          fetch(`${apiUrl}/api/orders/myorders`, { headers: { 'x-auth-token': token } }),
-          fetch(`${apiUrl}/api/address`, { headers: { 'x-auth-token': token } })
+          fetch(`${apiUrl}/api/orders/myorders`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${apiUrl}/api/address`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
         const ordersData = await ordersRes.json();
         const addressesData = await addressesRes.json();
