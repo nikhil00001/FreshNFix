@@ -9,8 +9,7 @@ import User from '../models/User.js';
 router.post('/add', cognitoAuth, async (req, res) => {
     const { productId, quantity } = req.body;
     
-    try {
-        const user = await User.findById(req.user.id);
+    try {User.findOne({ phone: req.user.phone });
         const cartItemIndex = user.cart.findIndex(item => item.product == productId);
         
         if (cartItemIndex > -1) {
@@ -23,7 +22,7 @@ router.post('/add', cognitoAuth, async (req, res) => {
         
         await user.save();
         // --- 💡 SOLUTION: Find the user again and populate the cart ---
-        const populatedUser = await User.findById(req.user.id).populate('cart.product');
+        const populatedUser = await User.findOne({ phone: req.user.phone }).populate('cart.product');
 
         res.json(populatedUser.cart); // <-- Send the FULLY POPULATED cart back
 
@@ -40,7 +39,7 @@ router.post('/add', cognitoAuth, async (req, res) => {
 // Access: Private
 router.get('/', cognitoAuth, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).populate('cart.product');
+        const user = await User.findOne({ phone: req.user.phone }).populate('cart.product');
         if (!user) {
             return res.status(404).json({ msg: 'User not found' });
         }
@@ -59,7 +58,7 @@ router.get('/', cognitoAuth, async (req, res) => {
 router.post('/update', cognitoAuth, async (req, res) => {
     const { productId, quantity } = req.body;
     try {
-        const user = await User.findById(req.user.id);
+        const user = await User.findOne({ phone: req.user.phone });
         const itemIndex = user.cart.findIndex(item => item.product == productId);
 
         if (itemIndex > -1) {
@@ -71,7 +70,7 @@ router.post('/update', cognitoAuth, async (req, res) => {
             return res.status(404).json({ msg: 'Item not found in cart' });
         }
         await user.save();
-        const populatedCart = await User.findById(req.user.id).populate('cart.product');
+        const populatedCart = await User.findOne({ phone: req.user.phone }).populate('cart.product');
         res.json(populatedCart.cart);
     } catch (err) {
         console.error(err.message);
@@ -89,7 +88,7 @@ router.delete('/remove/:productId', cognitoAuth, async (req, res) => {
             { _id: req.user.id },
             { $pull: { cart: { product: req.params.productId } } }
         );
-        const populatedCart = await User.findById(req.user.id).populate('cart.product');
+        const populatedCart = await User.findOne({ phone: req.user.phone }).populate('cart.product');
         res.json(populatedCart.cart);
     } catch (err) {
         console.error(err.message);

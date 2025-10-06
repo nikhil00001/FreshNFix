@@ -7,7 +7,7 @@ import User from '../models/User.js';
 // Endpoint: GET /api/wishlist
 router.get('/', cognitoAuth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('wishlist').populate('wishlist');
+    const user = await User.findOne({ phone: req.user.phone }).select('wishlist').populate('wishlist');
     res.json(user.wishlist);
   } catch (err) {
     console.error(err.message);
@@ -19,7 +19,7 @@ router.get('/', cognitoAuth, async (req, res) => {
 // Endpoint: POST /api/wishlist/toggle/:productId
 router.post('/toggle/:productId', cognitoAuth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findOne({ phone: req.user.phone });
     const productId = req.params.productId;
 
     // Check if the product is already in the wishlist

@@ -12,7 +12,7 @@ router.post('/', cognitoAuth, async (req, res) => {
   const { shippingAddress, fixedDeliverySlot } = req.body;
 
   try {
-    const user = await User.findById(req.user.id).populate('cart.product');
+    const user = await User.findOne({ phone: req.user.phone }).populate('cart.product');
     if (!user || user.cart.length === 0) {
       return res.status(400).json({ msg: 'Cart is empty' });
     }

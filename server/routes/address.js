@@ -7,7 +7,7 @@ import User from '../models/User.js';
 // Endpoint: GET /api/address
 router.get('/', cognitoAuth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('addresses');
+    const user = await User.findOne({ phone: req.user.phone }).select('addresses');
     res.json(user.addresses);
   } catch (err) {
     console.error(err.message);
@@ -23,7 +23,7 @@ router.post('/', cognitoAuth, async (req, res) => {
   const newAddress = { street, city, state, pincode, phone };
 
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findOne({ phone: req.user.phone });
     user.addresses.unshift(newAddress); // Add to the beginning of the array
     await user.save();
     res.json(user.addresses);
@@ -37,7 +37,7 @@ router.post('/', cognitoAuth, async (req, res) => {
 // Endpoint: DELETE /api/address/:id
 router.delete('/:id', cognitoAuth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findOne({ phone: req.user.phone });
     // Find the index of the address to remove
     const removeIndex = user.addresses.findIndex(item => item.id === req.params.id);
     if (removeIndex === -1) {
