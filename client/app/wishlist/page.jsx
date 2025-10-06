@@ -19,7 +19,7 @@ export default function WishlistPage() {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         const res = await fetch(`${apiUrl}/api/wishlist`, {
-          headers: { 'x-auth-token': token },
+          headers: { 'Authorization': `Bearer ${token}` },
         });
         if (res.ok) {
           const data = await res.json();

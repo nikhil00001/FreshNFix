@@ -23,7 +23,7 @@ export default function CheckoutPage() {
     const fetchAddresses = async () => {
         const token = localStorage.getItem('token');
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        const res = await fetch(`${apiUrl}/api/address`, { headers: { 'x-auth-token': token } });
+        const res = await fetch(`${apiUrl}/api/address`, { headers: { 'Authorization': `Bearer ${token}` } });
         if (res.ok) {
             const data = await res.json();
             setAddresses(data);
@@ -44,7 +44,7 @@ export default function CheckoutPage() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     const res = await fetch(`${apiUrl}/api/address`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(newAddress)
     });
     if (res.ok) {
@@ -80,7 +80,7 @@ const handlePlaceOrder = async () => {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       const res = await fetch(`${apiUrl}/api/orders`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({ shippingAddress: selectedAddress, fixedDeliverySlot: deliverySlot }),
       });
 

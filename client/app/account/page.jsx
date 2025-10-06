@@ -48,7 +48,7 @@ export default function AccountPage() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     const res = await fetch(`${apiUrl}/api/address`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(newAddress)
     });
     if (res.ok) {

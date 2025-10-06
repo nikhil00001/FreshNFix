@@ -14,7 +14,7 @@ export const WishlistProvider = ({ children }) => {
         try {
           const apiUrl = process.env.NEXT_PUBLIC_API_URL;
           const res = await fetch(`${apiUrl}/api/wishlist`, {
-            headers: { 'x-auth-token': token },
+            headers: { 'Authorization': `Bearer ${token}` },
           });
           if (res.ok) {
             const data = await res.json();
@@ -40,7 +40,7 @@ export const WishlistProvider = ({ children }) => {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         const res = await fetch(`${apiUrl}/api/wishlist/toggle/${productId}`, {
             method: 'POST',
-            headers: { 'x-auth-token': token }
+            headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
             const updatedWishlist = await res.json();
