@@ -5,15 +5,25 @@ const cognitoClient = new CognitoIdentityProviderClient({ region: "ap-south-1" }
 
 const admin = async (req, res, next) => {
   try {
+    console.log("--- Starting Admin Check ---");
+    console.log("Fetching live Cognito data for user ID (sub):", req.user.id);
+
     // req.user.id is the Cognito 'sub' ID from the cognitoAuth middleware
     const cognitoUser = await cognitoClient.send(new AdminGetUserCommand({
         UserPoolId: process.env.COGNITO_USER_POOL_ID,
         Username: req.user.id,
     }));
+    // THIS IS THE MOST IMPORTANT LOG
+    console.log("Live UserAttributes from Cognito:", JSON.stringify(cognitoUser.UserAttributes, null, 2));
+
 
     const groups = cognitoUser.UserAttributes.find(attr => attr.Name === 'cognito:groups');
+    console.log("Result of finding 'cognito:groups':", groups); // See if it found the attribute object
+
     
     if (!groups || !groups.Value.includes('Admins')) {
+      console.log("DENYING ACCESS: Cognito groups check failed.");
+
       return res.status(403).json({ msg: "Access denied. Not an admin." });
     }
     
