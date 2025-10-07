@@ -1,36 +1,27 @@
-import { CognitoIdentityProviderClient, AdminGetUserCommand } from "@aws-sdk/client-cognito-identity-provider";
+import { CognitoIdentityProviderClient, AdminListGroupsForUserCommand } from "@aws-sdk/client-cognito-identity-provider";
 import User from '../models/User.js'; // Your MongoDB User model
 
 const cognitoClient = new CognitoIdentityProviderClient({ region: "ap-south-1" });
 
 const admin = async (req, res, next) => {
   try {
-    console.log("--- Starting Admin Check ---");
-    console.log("Fetching live Cognito data for user ID (sub):", req.user.id);
-
-    // req.user.id is the Cognito 'sub' ID from the cognitoAuth middleware
-    const cognitoUser = await cognitoClient.send(new AdminGetUserCommand({
-        UserPoolId: process.env.COGNITO_USER_POOL_ID,
-        Username: req.user.id,
+    // 1. Use the CORRECT command to get the user's groups
+    const groupData = await cognitoClient.send(new AdminListGroupsForUserCommand({
+      UserPoolId: process.env.COGNITO_USER_POOL_ID,
+      Username: req.user.id, // This is the user's 'sub' ID from the token
     }));
-    // THIS IS THE MOST IMPORTANT LOG
-    console.log("Live UserAttributes from Cognito:", JSON.stringify(cognitoUser.UserAttributes, null, 2));
 
+    // 2. Check the 'Groups' array in the response
+    const isAdminInCognito = groupData.Groups && groupData.Groups.some(group => group.GroupName === 'Admins');
 
-    const groups = cognitoUser.UserAttributes.find(attr => attr.Name === 'cognito:groups');
-    console.log("Result of finding 'cognito:groups':", groups); // See if it found the attribute object
-
-    
-    if (!groups || !groups.Value.includes('Admins')) {
-      console.log("DENYING ACCESS: Cognito groups check failed.");
-
+    if (!isAdminInCognito) {
       return res.status(403).json({ msg: "Access denied. Not an admin." });
     }
     
-    // Additionally, ensure the user exists in your local DB and has the admin role
+    // 3. Your local database check remains the same
     const localUser = await User.findOne({ phone: req.user.phone });
     if (!localUser || localUser.role !== 'admin') {
-         return res.status(403).json({ msg: "Access denied. Local user not configured as admin." });
+      return res.status(403).json({ msg: "Access denied. Local user not configured as admin." });
     }
 
     next();
