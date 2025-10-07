@@ -1,23 +1,29 @@
-import { CognitoIdentityProviderClient, AdminGetUserCommand } from "@aws-sdk/client-cognito-identity-provider";
-import User from '../models/User.js'; // Your MongoDB User model
+import { CognitoIdentityProviderClient, AdminListGroupsForUserCommand } from "@aws-sdk/client-cognito-identity-provider";
+import User from '../models/User.js';
 
-const cognitoClient = new CognitoIdentityProviderClient({ region: "ap-south-1" });
+const cognitoClient = new CognitoIdentityProviderClient({ region: process.env.AWS_REGION });
 
 const admin = async (req, res, next) => {
   try {
     // req.user.id is the Cognito 'sub' ID from the cognitoAuth middleware
-    const cognitoUser = await cognitoClient.send(new AdminGetUserCommand({
+    const command = new AdminListGroupsForUserCommand({
         UserPoolId: process.env.COGNITO_USER_POOL_ID,
         Username: req.user.id,
-    }));
-
-    const groups = cognitoUser.UserAttributes.find(attr => attr.Name === 'cognito:groups');
+    });
     
-    if (!groups || !groups.Value.includes('admins')) {
+    // --- 💡 START OF FIX ---
+    // Use the new, correct command to get the user's groups
+    const { Groups } = await cognitoClient.send(command);
+
+    // Check if the 'Admins' group is present in the response
+    const isAdminInCognito = Groups && Groups.some(group => group.GroupName === 'Admins');
+
+    if (!isAdminInCognito) {
       return res.status(403).json({ msg: "Access denied. Not an admin." });
     }
+    // --- 💡 END OF FIX ---
     
-    // Additionally, ensure the user exists in your local DB and has the admin role
+    // The second check against our local MongoDB remains the same.
     const localUser = await User.findOne({ phone: req.user.phone });
     if (!localUser || localUser.role !== 'admin') {
          return res.status(403).json({ msg: "Access denied. Local user not configured as admin." });
@@ -25,7 +31,7 @@ const admin = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.error("admin check error:", err);
+    console.error("Admin check error:", err);
     res.status(500).send('Server error');
   }
 };
