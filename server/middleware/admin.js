@@ -19,8 +19,22 @@ const admin = async (req, res, next) => {
     }
     
     // 3. Your local database check remains the same
+   // const localUser = await User.findOne({ phone: req.user.phone });
+    //if (!localUser || localUser.role !== 'admin') {
+     // return res.status(403).json({ msg: "Access denied. Local user not configured as admin." });
+   // }
+    // ... after the Cognito check ...
+
+    console.log("--- Starting Local DB Check ---");
+    console.log("Searching for local user with phone number:", req.user.phone);
+
     const localUser = await User.findOne({ phone: req.user.phone });
+
+    // THIS IS THE MOST IMPORTANT LOG
+    console.log("User found in local DB:", localUser);
+
     if (!localUser || localUser.role !== 'admin') {
+      console.log("DENYING ACCESS: Local DB check failed.");
       return res.status(403).json({ msg: "Access denied. Local user not configured as admin." });
     }
 
