@@ -2,12 +2,14 @@ import express from 'express';
 const router = express.Router();
 import cognitoAuth from '../middleware/cognitoAuth.js';
 import User from '../models/User.js';
+import dbConnect from '../lib/dbConnect.js';
 
 // This single file fixes all current and potential cart-related issues.
 
 // GET user's cart (Used by the cart page)
 router.get('/', cognitoAuth, async (req, res) => {
     try {
+        await dbConnect();
         // 💡 FIX 1: Find the user in MongoDB by their phone number from the Cognito token.
         const user = await User.findOne({ phone: req.user.phone }).populate('cart.product');
         if (!user) {
@@ -36,6 +38,7 @@ router.post('/add', cognitoAuth, async (req, res) => {
   const { productId, quantity } = req.body;
   
   try {
+    await dbConnect();
     // 💡 FIX 1: Find the user by their phone number.
     const user = await User.findOne({ phone: req.user.phone });
     if (!user) return res.status(404).json({ msg: 'User not found' });
@@ -62,6 +65,7 @@ router.post('/add', cognitoAuth, async (req, res) => {
 router.post('/update', cognitoAuth, async (req, res) => {
     const { productId, quantity } = req.body;
     try {
+        await dbConnect();
         const user = await User.findOne({ phone: req.user.phone });
         if (!user) return res.status(404).json({ msg: 'User not found' });
 
@@ -87,6 +91,7 @@ router.post('/update', cognitoAuth, async (req, res) => {
 // DELETE to remove an item from the cart
 router.delete('/remove/:productId', cognitoAuth, async (req, res) => {
     try {
+        await dbConnect();
         const user = await User.findOne({ phone: req.user.phone });
         if (!user) return res.status(404).json({ msg: 'User not found' });
         

@@ -1,5 +1,6 @@
 import { CognitoIdentityProviderClient, SignUpCommand, InitiateAuthCommand, RespondToAuthChallengeCommand } from "@aws-sdk/client-cognito-identity-provider";
 import User from "../models/User.js"; // Your MongoDB User model
+import dbConnect from '../lib/dbConnect.js';
 
 const cognitoClient = new CognitoIdentityProviderClient({ region: "ap-south-1" }); // e.g., "ap-south-1"
 
@@ -11,6 +12,7 @@ const startAuth = async (req, res) => {
     const clientId = process.env.COGNITO_APP_CLIENT_ID;
 
     try {
+        await dbConnect();
         // We first try to sign up the user. If they already exist, Cognito will throw an error
         // which we catch and then proceed with the login flow.
         const signUpParams = {
@@ -30,6 +32,7 @@ const startAuth = async (req, res) => {
 
     // Now, initiate the authentication flow which will send the OTP
     try {
+        await dbConnect();
         const authParams = {
             ClientId: clientId,
             AuthFlow: "CUSTOM_AUTH",
@@ -60,6 +63,7 @@ const verifyOtp = async (req, res) => {
     };
 
     try {
+        await dbConnect();
         const response = await cognitoClient.send(new RespondToAuthChallengeCommand(params));
         
         // --- 💡 START OF FIX ---

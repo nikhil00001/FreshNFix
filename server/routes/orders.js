@@ -4,6 +4,7 @@ import cognitoAuth from '../middleware/cognitoAuth.js';
 import admin from '../middleware/admin.js';
 import Order from '../models/Order.js';
 import User from '../models/User.js';
+import dbConnect from '../lib/dbConnect.js';
 
 // --- Place a new order ---
 // Endpoint: POST /api/orders
@@ -12,6 +13,7 @@ router.post('/', cognitoAuth, async (req, res) => {
   const { shippingAddress, fixedDeliverySlot } = req.body;
 
   try {
+    await dbConnect();
     const user = await User.findOne({ phone: req.user.phone }).populate('cart.product');
     if (!user || user.cart.length === 0) {
       return res.status(400).json({ msg: 'Cart is empty' });
@@ -56,6 +58,7 @@ router.post('/', cognitoAuth, async (req, res) => {
 // Access: Private
 router.get('/myorders', cognitoAuth, async (req, res) => {
   try {
+    await dbConnect();
     const orders = await Order.find({ user: req.user.id }).populate('items.product').sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {
@@ -70,6 +73,7 @@ router.get('/myorders', cognitoAuth, async (req, res) => {
 // Endpoint: GET /api/orders/all
 router.get('/all', [cognitoAuth, admin], async (req, res) => {
   try {
+    await dbConnect();
     // Populate user's name and email to show in the admin panel
     const orders = await Order.find().populate('user', 'name email').populate('items.product').sort({ createdAt: -1 });
     res.json(orders);
@@ -84,6 +88,7 @@ router.get('/all', [cognitoAuth, admin], async (req, res) => {
 router.put('/status/:id', [cognitoAuth, admin], async (req, res) => {
   const { status } = req.body;
   try {
+    await dbConnect();
     const order = await Order.findById(req.params.id);
     if (!order) {
       return res.status(404).json({ msg: 'Order not found' });

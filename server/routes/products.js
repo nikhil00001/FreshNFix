@@ -3,6 +3,8 @@ const router = express.Router();
 import Product from '../models/Product.js';
 import cognitoAuth from '../middleware/cognitoAuth.js';
 import admin from '../middleware/admin.js';
+import dbConnect from '../lib/dbConnect.js'; // 1. Import the new utility
+
 
 
 
@@ -10,6 +12,7 @@ import admin from '../middleware/admin.js';
 // Endpoint: GET /api/products
 router.get('/', async (req, res) => {
   try {
+    await dbConnect();
     const products = await Product.find();
     res.json(products);
   } catch (err) {
@@ -23,6 +26,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const { name, description, price, category, unit, imageUrl, stock } = req.body;
   try {
+    await dbConnect();
     const newProduct = new Product({
       name,
       description,
@@ -46,6 +50,7 @@ router.post('/', async (req, res) => {
 // Endpoint: GET /api/products/search?q=your_query
 router.get('/search', async (req, res) => {
   try {
+    await dbConnect();
     const query = req.query.q;
     if (!query) {
       return res.status(400).json({ msg: 'Search query is required' });
@@ -71,6 +76,7 @@ router.get('/search', async (req, res) => {
 // --- Get a single product by ID (Public) ---
 router.get('/:id', async (req, res) => {
   try {
+    await dbConnect();
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ msg: 'Product not found' });
     res.json(product);
@@ -83,6 +89,7 @@ router.get('/:id', async (req, res) => {
 // --- Update a product (Admin Only) ---
 router.put('/:id', [cognitoAuth, admin], async (req, res) => {
   try {
+    await dbConnect();
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!product) return res.status(404).json({ msg: 'Product not found' });
     res.json(product);
@@ -95,6 +102,7 @@ router.put('/:id', [cognitoAuth, admin], async (req, res) => {
 // --- Delete a product (Admin Only) ---
 router.delete('/:id', [cognitoAuth, admin], async (req, res) => {
   try {
+    await dbConnect();
     const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) return res.status(404).json({ msg: 'Product not found' });
     res.json({ msg: 'Product removed' });
@@ -110,6 +118,7 @@ router.delete('/:id', [cognitoAuth, admin], async (req, res) => {
 // Endpoint: GET /api/products/category/:categoryName
 router.get('/category/:categoryName', async (req, res) => {
   try {
+    await dbConnect();
     // Create a case-insensitive regular expression from the URL parameter
     const categoryRegex = new RegExp(`^${req.params.categoryName}$`, 'i');
     
@@ -133,6 +142,7 @@ router.post('/reorder', [cognitoAuth, admin], async (req, res) => {
   }
 
   try {
+    await dbConnect();
     // Create an array of update operations
     const updatePromises = orderedIds.map((id, index) => {
       return Product.findByIdAndUpdate(id, { position: index });

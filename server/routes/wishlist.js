@@ -2,11 +2,13 @@ import express from 'express';
 const router = express.Router();
 import cognitoAuth from '../middleware/cognitoAuth.js';
 import User from '../models/User.js';
+import dbConnect from '../lib/dbConnect.js';
 
 // --- Get user's wishlist ---
 // Endpoint: GET /api/wishlist
 router.get('/', cognitoAuth, async (req, res) => {
   try {
+    await dbConnect();
     const user = await User.findOne({ phone: req.user.phone }).select('wishlist').populate('wishlist');
     res.json(user.wishlist);
   } catch (err) {
@@ -19,6 +21,7 @@ router.get('/', cognitoAuth, async (req, res) => {
 // Endpoint: POST /api/wishlist/toggle/:productId
 router.post('/toggle/:productId', cognitoAuth, async (req, res) => {
   try {
+    await dbConnect();
     const user = await User.findOne({ phone: req.user.phone });
     const productId = req.params.productId;
 
