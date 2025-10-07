@@ -12,44 +12,56 @@ router.post('/', cognitoAuth, async (req, res) => {
   const { shippingAddress, fixedDeliverySlot } = req.body;
 
   try {
-    // 💡 FIX: Find the user in MongoDB by their phone number from the Cognito token.
     const user = await User.findOne({ phone: req.user.phone }).populate('cart.product');
     if (!user || user.cart.length === 0) {
       return res.status(400).json({ msg: 'Cart is empty or user not found' });
     }
 
-    const totalAmount = user.cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0) + 50;
+    const totalAmount = user.cart.reduce((acc, item) => {
+      // Add a safety check in case a product was deleted
+      if (item.product && item.product.price) {
+        return acc + item.product.price * item.quantity;
+      }
+      return acc;
+    }, 50); // Start with delivery fee
 
     const newOrder = new Order({
-      user: user._id, // Use the MongoDB user ID
-      items: user.cart.map(item => ({ product: item.product, quantity: item.quantity })),
+      user: user._id,
+      // --- 💡 START OF FIX ---
+      // Convert each populated product from a Mongoose document to a plain object
+      items: user.cart.map(item => ({ 
+        product: item.product.toObject(), 
+        quantity: item.quantity 
+      })),
+      // --- 💡 END OF FIX ---
       totalAmount,
       shippingAddress,
       fixedDeliverySlot,
     });
 
-    const order = await newOrder.save();
+    const order = await newOrder.save(); // This will now succeed
     
     user.cart = [];
     await user.save();
 
     res.status(201).json(order);
   } catch (err) {
-    console.error("POST /orders Error:", err.message);
-    res.status(500).send('Server Error');
+    console.error("POST /orders Error:", err);
+    // Send a more specific error message back to the frontend
+    res.status(500).json({ msg: err.message || 'Server Error' });
   }
 });
+
+// --- The rest of your routes (GET /myorders, GET /all, etc.) are unchanged ---
 
 // GET user's own orders (Private)
 router.get('/myorders', cognitoAuth, async (req, res) => {
   await dbConnect();
   try {
-    // 💡 FIX: Find the user by phone first to get their MongoDB _id.
     const user = await User.findOne({ phone: req.user.phone });
     if (!user) {
         return res.status(404).json({ msg: 'User not found' });
     }
-    // Now, find orders using the correct MongoDB user _id.
     const orders = await Order.find({ user: user._id }).sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {
@@ -57,8 +69,6 @@ router.get('/myorders', cognitoAuth, async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-
-// --- Admin Routes ---
 
 // GET all orders (Admin Only)
 router.get('/all', [cognitoAuth, admin], async (req, res) => {
@@ -91,3 +101,4 @@ router.put('/status/:id', [cognitoAuth, admin], async (req, res) => {
 });
 
 export default router;
+
