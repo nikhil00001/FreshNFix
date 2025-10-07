@@ -12,7 +12,6 @@ router.post('/', cognitoAuth, async (req, res) => {
   const { shippingAddress, fixedDeliverySlot } = req.body;
 
   try {
-    // 💡 FIX: Find the user in MongoDB by their phone number from the Cognito token.
     const user = await User.findOne({ phone: req.user.phone }).populate('cart.product');
     if (!user || user.cart.length === 0) {
       return res.status(400).json({ msg: 'Cart is empty or user not found' });
@@ -26,10 +25,13 @@ router.post('/', cognitoAuth, async (req, res) => {
     }, 50); // Start with delivery fee
 
     const newOrder = new Order({
-      user: user._id, // Use the correct MongoDB user _id
-      items: user.cart.map(item => ({ 
-        product: item.product.toObject(), 
-        quantity: item.quantity 
+      user: user._id,
+      items: user.cart.map(item => ({
+        // --- THIS IS THE FIX ---
+        // Create an item object that perfectly matches your OrderSchema
+        product: item.product._id,
+        quantity: item.quantity,
+        price: item.product.price // Capture the price at the time of purchase
       })),
       totalAmount,
       shippingAddress,
@@ -38,6 +40,7 @@ router.post('/', cognitoAuth, async (req, res) => {
 
     const order = await newOrder.save();
     
+    // Clear the user's cart after the order is successfully created
     user.cart = [];
     await user.save();
 
@@ -48,21 +51,17 @@ router.post('/', cognitoAuth, async (req, res) => {
   }
 });
 
-
 // GET user's own orders (Private)
 router.get('/myorders', cognitoAuth, async (req, res) => {
   await dbConnect();
   try {
-    // 💡 FIX: First, find the user by phone to get their MongoDB _id.
     const user = await User.findOne({ phone: req.user.phone });
     if (!user) {
         return res.status(404).json({ msg: 'User not found' });
     }
-    // Now, find orders using the correct MongoDB user _id.
     const orders = await Order.find({ user: user._id }).sort({ createdAt: -1 });
     res.json(orders);
-  } catch (err)
- {
+  } catch (err) {
     console.error("GET /myorders Error:", err.message);
     res.status(500).send('Server Error');
   }
@@ -101,4 +100,3 @@ router.put('/status/:id', [cognitoAuth, admin], async (req, res) => {
 });
 
 export default router;
-
