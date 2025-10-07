@@ -6,29 +6,23 @@ import Order from '../models/Order.js';
 import User from '../models/User.js';
 import dbConnect from '../lib/dbConnect.js';
 
-// --- Place a new order ---
-// Endpoint: POST /api/orders
-// Access: Private
+// POST to place an order (Private)
 router.post('/', cognitoAuth, async (req, res) => {
+  await dbConnect();
   const { shippingAddress, fixedDeliverySlot } = req.body;
 
   try {
-    await dbConnect();
+    // 💡 FIX: Find the user in MongoDB by their phone number from the Cognito token.
     const user = await User.findOne({ phone: req.user.phone }).populate('cart.product');
     if (!user || user.cart.length === 0) {
-      return res.status(400).json({ msg: 'Cart is empty' });
+      return res.status(400).json({ msg: 'Cart is empty or user not found' });
     }
 
-    const totalAmount = user.cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0) + 50; // +50 for delivery
+    const totalAmount = user.cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0) + 50;
 
     const newOrder = new Order({
-      user: req.user.id,
-      // --- 💡 SOLUTION: Map cart items correctly, storing price and product ID ---
-      items: user.cart.map(item => ({
-        product: item.product._id, // Store only the ID
-        quantity: item.quantity,
-        price: item.product.price // Store the price at time of purchase
-      })),
+      user: user._id, // Use the MongoDB user ID
+      items: user.cart.map(item => ({ product: item.product, quantity: item.quantity })),
       totalAmount,
       shippingAddress,
       fixedDeliverySlot,
@@ -36,69 +30,62 @@ router.post('/', cognitoAuth, async (req, res) => {
 
     const order = await newOrder.save();
     
-    // Clear the user's cart
     user.cart = [];
     await user.save();
 
     res.status(201).json(order);
-
   } catch (err) {
-     console.error("Order placement error:", err); // Log the full error for your reference
-     // Send back the specific validation message from the database
-     res.status(400).json({ msg: err.message });
-    }
-
+    console.error("POST /orders Error:", err.message);
+    res.status(500).send('Server Error');
+  }
 });
 
-
-// ... existing POST '/' route ...
-
-// --- Get orders for the logged-in user ---
-// Endpoint: GET /api/orders/myorders
-// Access: Private
+// GET user's own orders (Private)
 router.get('/myorders', cognitoAuth, async (req, res) => {
+  await dbConnect();
   try {
-    await dbConnect();
-    const orders = await Order.find({ user: req.user.id }).populate('items.product').sort({ createdAt: -1 });
+    // 💡 FIX: Find the user by phone first to get their MongoDB _id.
+    const user = await User.findOne({ phone: req.user.phone });
+    if (!user) {
+        return res.status(404).json({ msg: 'User not found' });
+    }
+    // Now, find orders using the correct MongoDB user _id.
+    const orders = await Order.find({ user: user._id }).sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {
-    console.error(err.message);
+    console.error("GET /myorders Error:", err.message);
     res.status(500).send('Server Error');
   }
 });
 
-// ... existing routes: POST '/', GET '/myorders' ...
+// --- Admin Routes ---
 
-// --- Get all orders (Admin Only) ---
-// Endpoint: GET /api/orders/all
+// GET all orders (Admin Only)
 router.get('/all', [cognitoAuth, admin], async (req, res) => {
+  await dbConnect();
   try {
-    await dbConnect();
-    // Populate user's name and email to show in the admin panel
-    const orders = await Order.find().populate('user', 'name email').populate('items.product').sort({ createdAt: -1 });
+    const orders = await Order.find().populate('user', 'name phone').sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {
-    console.error(err.message);
+    console.error("GET /orders/all Error:", err.message);
     res.status(500).send('Server Error');
   }
 });
 
-// --- Update order status (Admin Only) ---
-// Endpoint: PUT /api/orders/status/:id
+// PUT to update order status (Admin Only)
 router.put('/status/:id', [cognitoAuth, admin], async (req, res) => {
+  await dbConnect();
   const { status } = req.body;
   try {
-    await dbConnect();
     const order = await Order.findById(req.params.id);
     if (!order) {
       return res.status(404).json({ msg: 'Order not found' });
     }
-
     order.status = status;
     await order.save();
     res.json(order);
   } catch (err) {
-    console.error(err.message);
+    console.error("PUT /orders/status Error:", err.message);
     res.status(500).send('Server Error');
   }
 });
