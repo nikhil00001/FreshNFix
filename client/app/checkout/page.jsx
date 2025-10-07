@@ -6,7 +6,7 @@ import CartContext from '@/context/CartContext';
 import toast from 'react-hot-toast';
 
 export default function CheckoutPage() {
-  const { cart } = useContext(CartContext);
+  const { cart, clearCart } = useContext(CartContext);
   const router = useRouter();
 
   // State for addresses and the selected one
@@ -86,7 +86,7 @@ const handlePlaceOrder = async () => {
 
       if (res.ok) {
         toast.success('Order placed successfully!');
-        // In a real app, you would also clear the cart context here
+        clearCart(); 
         router.push('/order-success');
       } else {
         const errorData = await res.json();

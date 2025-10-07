@@ -103,10 +103,14 @@ export const CartProvider = ({ children }) => {
       console.error('Failed to remove item:', error);
     }
   };
+   
+  const clearCart = () => {
+    setCart([]); // Simply set the cart state to an empty array
+  };
   
   return (
     // --- 💡 CHANGE 4: Add loading to the provider's value ---
-    <CartContext.Provider value={{ cart, loading, cartCount, addToCart, updateQuantity, removeFromCart }}>
+    <CartContext.Provider value={{ cart, loading, cartCount, addToCart, updateQuantity, removeFromCart, clearCart }}>
       {children}
     </CartContext.Provider>
   );
