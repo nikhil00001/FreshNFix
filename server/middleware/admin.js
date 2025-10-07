@@ -13,7 +13,7 @@ const admin = async (req, res, next) => {
 
     const groups = cognitoUser.UserAttributes.find(attr => attr.Name === 'cognito:groups');
     
-    if (!groups || !groups.Value.includes('Admins')) {
+    if (!groups || !groups.Value.includes('admins')) {
       return res.status(403).json({ msg: "Access denied. Not an admin." });
     }
     
@@ -25,7 +25,7 @@ const admin = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.error("Admin check error:", err);
+    console.error("admin check error:", err);
     res.status(500).send('Server error');
   }
 };
