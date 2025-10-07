@@ -1,29 +1,23 @@
-import { CognitoIdentityProviderClient, AdminListGroupsForUserCommand } from "@aws-sdk/client-cognito-identity-provider";
-import User from '../models/User.js';
+import { CognitoIdentityProviderClient, AdminGetUserCommand } from "@aws-sdk/client-cognito-identity-provider";
+import User from '../models/User.js'; // Your MongoDB User model
 
-const cognitoClient = new CognitoIdentityProviderClient({ region: process.env.AWS_REGION });
+const cognitoClient = new CognitoIdentityProviderClient({ region: "ap-south-1" });
 
 const admin = async (req, res, next) => {
   try {
     // req.user.id is the Cognito 'sub' ID from the cognitoAuth middleware
-    const command = new AdminListGroupsForUserCommand({
+    const cognitoUser = await cognitoClient.send(new AdminGetUserCommand({
         UserPoolId: process.env.COGNITO_USER_POOL_ID,
         Username: req.user.id,
-    });
+    }));
+
+    const groups = cognitoUser.UserAttributes.find(attr => attr.Name === 'cognito:groups');
     
-    // --- 💡 START OF FIX ---
-    // Use the new, correct command to get the user's groups
-    const { Groups } = await cognitoClient.send(command);
-
-    // Check if the 'Admins' group is present in the response
-    const isAdminInCognito = Groups && Groups.some(group => group.GroupName === 'Admins');
-
-    if (!isAdminInCognito) {
+    if (!groups || !groups.Value.includes('Admins')) {
       return res.status(403).json({ msg: "Access denied. Not an admin." });
     }
-    // --- 💡 END OF FIX ---
     
-    // The second check against our local MongoDB remains the same.
+    // Additionally, ensure the user exists in your local DB and has the admin role
     const localUser = await User.findOne({ phone: req.user.phone });
     if (!localUser || localUser.role !== 'admin') {
          return res.status(403).json({ msg: "Access denied. Local user not configured as admin." });
