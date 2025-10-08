@@ -52,41 +52,29 @@ const verifyOtp = async (req, res) => {
     const { phone, otp, session } = req.body;
     const clientId = process.env.COGNITO_APP_CLIENT_ID;
 
-    const params = {
-        ClientId: clientId,
-        ChallengeName: "CUSTOM_CHALLENGE",
-        Session: session,
-        ChallengeResponses: {
-            USERNAME: phone,
-            ANSWER: otp,
-        },
-    };
+    // ... (rest of the setup)
 
     try {
         await dbConnect();
         const response = await cognitoClient.send(new RespondToAuthChallengeCommand(params));
-        
-        // --- 💡 START OF FIX ---
-        // The IdToken is an encoded string. We need to decode it.
-        const idToken = response.AuthenticationResult.IdToken;
-        
-        // The middle part of the token is the payload, which is Base64 encoded.
-        const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString());
-        
-        // Now we can safely get the user's unique ID ('sub').
+
+        // ... (token decoding logic)
         const cognitoUserId = payload.sub;
-        const accessToken = response.AuthenticationResult.AccessToken;
-        // --- 💡 END OF FIX ---
 
         // Check if user exists in our MongoDB, if not, create them
+        console.log(`--- Searching for user in MongoDB with phone: ${phone}`); // <-- ADD THIS
         let user = await User.findOne({ phone: phone });
+
         if (!user) {
-            // We can also add the Cognito ID to our local user for future reference
+            console.log("--- User not found. Creating new user in MongoDB..."); // <-- ADD THIS
             user = new User({ phone: phone, cognitoId: cognitoUserId }); 
             await user.save();
+            console.log(`--- Successfully created user: ${user._id}`); // <-- ADD THIS
+        } else {
+            console.log(`--- Found existing user: ${user._id}`);
         }
 
-        res.json({ token: accessToken }); // Send the Cognito Access Token to the client
+        res.json({ token: response.AuthenticationResult.AccessToken });
     } catch (err) {
         console.error("Cognito VerifyOTP Error:", err);
         res.status(400).json({ msg: "Invalid or expired OTP." });

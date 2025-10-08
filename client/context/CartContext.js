@@ -68,7 +68,7 @@ export const CartProvider = ({ children }) => {
       toast.error('Could not add item to cart.');
     }
   };
-  
+
   const updateQuantity = async (productId, quantity) => {
     const token = localStorage.getItem('token');
     try {
