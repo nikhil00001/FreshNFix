@@ -8,9 +8,14 @@ const UserSchema = new mongoose.Schema({
 
   phone: { 
     type: String, 
-    unique: true, 
-    sparse: true 
+    required: true ,
+    unique: true
   }, // Add the phone field
+  email: {
+    type: String,
+    unique: true,
+    sparse: true // Allows multiple docs with null email
+  },
   
   role: {
     type: String,
