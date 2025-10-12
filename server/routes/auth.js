@@ -77,7 +77,7 @@ const verifyOtp = async (req, res) => {
             await user.save();
         }
 
-        res.json({ token: response.AuthenticationResult.AccessToken });
+        res.json({ token: idToken });
     } catch (err) {
         console.error("Cognito VerifyOTP Error:", err);
         res.status(400).json({ msg: "Invalid or expired OTP." });
