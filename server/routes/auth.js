@@ -46,32 +46,35 @@ const startAuth = async (req, res) => {
     }
 };
 
-
-// --- Step 2: Verify the OTP and Get Tokens (Corrected) ---
 const verifyOtp = async (req, res) => {
     const { phone, otp, session } = req.body;
     const clientId = process.env.COGNITO_APP_CLIENT_ID;
 
-    // ... (rest of the setup)
+    // --- FIX: This block defines the 'params' object ---
+    const params = {
+        ClientId: clientId,
+        ChallengeName: "CUSTOM_CHALLENGE",
+        Session: session,
+        ChallengeResponses: {
+            USERNAME: phone,
+            ANSWER: otp,
+        },
+    };
+    // --------------------------------------------------
 
     try {
         await dbConnect();
+        // Now 'params' exists and this command will work
         const response = await cognitoClient.send(new RespondToAuthChallengeCommand(params));
-
-        // ... (token decoding logic)
+        
+        const idToken = response.AuthenticationResult.IdToken;
+        const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString());
         const cognitoUserId = payload.sub;
-
-        // Check if user exists in our MongoDB, if not, create them
-        console.log(`--- Searching for user in MongoDB with phone: ${phone}`); // <-- ADD THIS
+        
         let user = await User.findOne({ phone: phone });
-
         if (!user) {
-            console.log("--- User not found. Creating new user in MongoDB..."); // <-- ADD THIS
-            user = new User({ phone: phone, cognitoId: cognitoUserId }); 
+            user = new User({ phone: phone, cognitoId: cognitoUserId, role: 'user' });
             await user.save();
-            console.log(`--- Successfully created user: ${user._id}`); // <-- ADD THIS
-        } else {
-            console.log(`--- Found existing user: ${user._id}`);
         }
 
         res.json({ token: response.AuthenticationResult.AccessToken });
