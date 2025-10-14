@@ -15,13 +15,6 @@ export default function Navbar() {
   const { isLoggedIn, isAdmin } = useAuth(); // Use the auth hook
   const [isMenuOpen, setIsMenuOpen] = useState(false); // State for the mobile menu
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
-      setIsLoggedIn(!!token);
-    }
-  }, []);
-
   const handleLogout = () => {
     localStorage.removeItem('token');
     window.location.href = '/';

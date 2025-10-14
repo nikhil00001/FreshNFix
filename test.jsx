@@ -1,64 +1,107 @@
-// --- 💡 FIX 1: Convert all `require` to `import` ---
-import express from 'express';
-import cors from 'cors';
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
+"use client";
 
-// --- 💡 FIX 2: Import all your route files using the `import` syntax ---
-import { startAuth, verifyOtp } from './routes/auth.js';
-import productsRouter from './routes/products.js';
-import cartRouter from './routes/cart.js';
-import ordersRouter from './routes/orders.js';
-import wishlistRouter from './routes/wishlist.js';
-import addressRouter from './routes/address.js';
-import { router as otpRouter } from './routes/otp.js';
+import Link from 'next/link';
+import { useContext } from 'react';
+import useAuth from '@/hooks/useAuth'; // 1. Import our new hook
+import CartContext from '@/context/CartContext';
+import AuthContext from '@/context/AuthContext';
+import { ShoppingCartIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 
-// --- This line initializes your environment variables ---
-dotenv.config();
+export default function Navbar() {
+  const { cartCount } = useContext(CartContext);
+  const { openAuthModal } = useContext(AuthContext);
+  
+  // 2. Use the new hook to get the user's login and admin status
+  const { isLoggedIn, isAdmin } = useAuth(); 
+  
+  // The isMenuOpen state remains the same
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-const app = express();
-const PORT = process.env.PORT || 5001;
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/';
+  };
 
-// Your CORS and middleware setup is correct, no changes needed here.
-const allowedOrigins = [
-  'https://fresh-n-fix.vercel.app',
-  'http://localhost:3000'
-];
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-};
-app.use(cors(corsOptions));
-app.use(express.json());
+  return (
+    <header className="sticky top-0 z-50 bg-white shadow-sm">
+      <nav className="container mx-auto px-4 py-4">
+        <div className="flex justify-between items-center">
+          <Link href="/" className="text-2xl font-bold text-blue-600">
+            FreshNFix
+          </Link>
 
-// --- MongoDB Connection ---
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected successfully!"))
-  .catch(err => console.error("MongoDB connection error:", err));
+          {/* --- Desktop Menu --- */}
+          <div className="hidden md:flex items-center space-x-6">
+            <Link href="/cart" className="relative p-2">
+              <ShoppingCartIcon className="h-6 w-6 text-gray-600 hover:text-blue-600" />
+              {cartCount > 0 && (
+                <span className="absolute top-0 right-0 bg-orange-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
 
-// --- 💡 FIX 3: Register all your imported routers ---
-// New Cognito auth routes
-app.post('/api/auth/start', startAuth);
-app.post('/api/auth/verify', verifyOtp);
+            {isLoggedIn ? (
+              <div className="flex items-center space-x-4">
+                {/* 3. Conditionally render the Admin Panel button */}
+                {isAdmin && (
+                  <Link href="/admin/products" className="font-semibold text-red-600 hover:text-red-700">
+                    Admin Panel
+                  </Link>
+                )}
+                <Link href="/wishlist" className="text-gray-600 hover:text-blue-600 font-medium">
+                  Wishlist
+                </Link>
+                <Link href="/account" className="text-gray-600 hover:text-blue-600 font-medium">
+                  My Account
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <button onClick={openAuthModal} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                Login
+              </button>
+            )}
+          </div>
 
-// The rest of your application routes
-app.use('/api/products', productsRouter);
-app.use('/api/cart', cartRouter);
-app.use('/api/orders', ordersRouter);
-app.use('/api/wishlist', wishlistRouter);
-app.use('/api/address', addressRouter);
-app.use('/api/otp', otpRouter);
+          {/* --- Mobile Menu (also updated) --- */}
+          <div className="md:hidden flex items-center">
+            {/* ... cart icon */}
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              {isMenuOpen ? <XMarkIcon className="h-7 w-7"/> : <Bars3Icon className="h-7 w-7" />}
+            </button>
+          </div>
+        </div>
+      </nav>
 
-// A simple test route to make sure the server is running
-app.get('/api', (req, res) => {
-  res.json({ message: "Hello from the FreshNFix API! 🚀" });
-});
-
-// For Vercel deployment, we export the app instead of listening.
-// If you want to run it locally, you can add app.listen(PORT, ...)
-export default app;
+      {/* --- Mobile Menu Panel (also updated) --- */}
+      {isMenuOpen && (
+        <div className="md:hidden bg-white border-t">
+          <div className="px-4 py-4 flex flex-col space-y-4">
+            {isLoggedIn ? (
+              <>
+                {isAdmin && (
+                  <Link href="/admin/products" className="font-semibold text-red-600 hover:text-red-700" onClick={() => setIsMenuOpen(false)}>
+                    Admin Panel
+                  </Link>
+                )}
+                <Link href="/wishlist" /* ... */>Wishlist</Link>
+                <Link href="/account" /* ... */>My Account</Link>
+                <button onClick={handleLogout} /* ... */>Logout</button>
+              </>
+            ) : (
+              <button onClick={() => { openAuthModal(); setIsMenuOpen(false); }} /* ... */>
+                Login
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </header>
+  );
+}
