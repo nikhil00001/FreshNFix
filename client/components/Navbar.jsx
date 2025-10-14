@@ -105,7 +105,8 @@ export default function Navbar() {
                   Logout
                 </button>
               </>
-            ) : // --- 💡 FIX 2: Change this from a Link to a button that opens the modal. ---
+            ) : (
+              // --- 💡 FIX 2: Change this from a Link to a button that opens the modal. ---
             <button 
               onClick={() => {
                 openAuthModal();
