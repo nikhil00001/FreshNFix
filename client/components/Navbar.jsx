@@ -5,12 +5,14 @@ import { useContext, useEffect, useState } from 'react';
 import CartContext from '@/context/CartContext';
 import { ShoppingCartIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'; // Import menu icons
 import AuthContext from '@/context/AuthContext';
+import useAuth from '@/hooks/useAuth'; // Import the new hook
+
 
 
 export default function Navbar() {
   const { openAuthModal } = useContext(AuthContext);
   const { cartCount } = useContext(CartContext);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { isLoggedIn, isAdmin } = useAuth(); // Use the auth hook
   const [isMenuOpen, setIsMenuOpen] = useState(false); // State for the mobile menu
 
   useEffect(() => {
@@ -22,7 +24,6 @@ export default function Navbar() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    setIsLoggedIn(false);
     window.location.href = '/';
   };
 
@@ -47,6 +48,11 @@ export default function Navbar() {
 
             {isLoggedIn ? (
               <div className="flex items-center space-x-4">
+                {isAdmin && (
+                  <Link href="/admin/dashboard" className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium">
+                    Admin Panel
+                  </Link>
+                )}
                 {/* Add the new Wishlist link here */}
                 <Link href="/wishlist" className="text-gray-600 hover:text-blue-600 font-medium">
                   Wishlist
