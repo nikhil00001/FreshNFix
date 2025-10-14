@@ -23,7 +23,7 @@ export default function Navbar() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     setIsLoggedIn(false);
-    window.location.href = '/login';
+    window.location.href = '/';
   };
 
   return (
@@ -105,10 +105,16 @@ export default function Navbar() {
                   Logout
                 </button>
               </>
-            ) : (
-              <Link href="/login" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-center" onClick={() => setIsMenuOpen(false)}>
-                Login
-              </Link>
+            ) : // --- 💡 FIX 2: Change this from a Link to a button that opens the modal. ---
+            <button 
+              onClick={() => {
+                openAuthModal();
+                setIsMenuOpen(false); // Close the menu after clicking
+              }} 
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-center"
+            >
+              Login
+            </button>
             )}
           </div>
         </div>
