@@ -37,6 +37,10 @@ export default function CheckoutPage() {
     fetchAddresses();
   }, []);
 
+  const handleAddressChange = (e) => {
+    setNewAddress({ ...newAddress, [e.target.name]: e.target.value });
+  };
+
   // NEW: Handler to submit the new address
   const handleAddAddress = async (e) => {
     e.preventDefault();
@@ -58,6 +62,8 @@ export default function CheckoutPage() {
         toast.error('Failed to add address.');
     }
   };
+
+  
 
 
   const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
