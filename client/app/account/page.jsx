@@ -6,6 +6,7 @@ import { MapPinIcon } from '@heroicons/react/24/solid'; // Import a location ico
 
 
 export default function AccountPage() {
+  const [user, setUser] = useState({ name: '', phone: '' });
   const [orders, setOrders] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -21,22 +22,51 @@ export default function AccountPage() {
       }
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        const [ordersRes, addressesRes] = await Promise.all([
+        const [profileRes, ordersRes, addressesRes] = await Promise.all([
+          fetch(`${apiUrl}/api/profile/me`, { headers: { 'Authorization': `Bearer ${token}` } }),
           fetch(`${apiUrl}/api/orders/myorders`, { headers: { 'Authorization': `Bearer ${token}` } }),
           fetch(`${apiUrl}/api/address`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
+        const profileData = await profileRes.json();
         const ordersData = await ordersRes.json();
         const addressesData = await addressesRes.json();
+
+        if (profileRes.ok) setUser(profileData);
         setOrders(ordersData);
         setAddresses(addressesData);
       } catch (error) {
         console.error('Failed to fetch account data:', error);
+        toast.error('Could not load account data.');
       } finally {
         setLoading(false);
       }
     };
     fetchData();
   }, []);
+
+  // Handler to update the user's name in the local state
+  const handleNameChange = (e) => {
+    setUser({ ...user, name: e.target.value });
+  };
+
+  // Handler to save the updated name to the backend
+  const handleUpdateName = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    const res = await fetch(`${apiUrl}/api/profile/me`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ name: user.name })
+    });
+
+    if (res.ok) {
+      toast.success('Profile updated successfully!');
+    } else {
+      toast.error('Failed to update profile.');
+    }
+  };
 
   const handleAddressChange = (e) => {
     setNewAddress({ ...newAddress, [e.target.name]: e.target.value });
@@ -116,6 +146,36 @@ export default function AccountPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">My Account</h1>
+
+      {/* --- NEW: My Profile Section --- */}
+      <div className="mb-12">
+        <h2 className="text-2xl font-semibold mb-4">My Profile</h2>
+        <form onSubmit={handleUpdateName} className="bg-white p-6 rounded-lg shadow-md border space-y-4 max-w-lg">
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
+            <input
+              type="text"
+              id="name"
+              value={user.name || ''}
+              onChange={handleNameChange}
+              placeholder="Enter your full name"
+              className="mt-1 w-full p-2 border rounded"
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone Number</label>
+            <input
+              type="text"
+              id="phone"
+              value={user.phone || ''}
+              disabled
+              className="mt-1 w-full p-2 border rounded bg-gray-100 cursor-not-allowed"
+            />
+          </div>
+          <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">Save Changes</button>
+        </form>
+      </div>
       
       {/* --- Address Section --- */}
       <div className="mb-12">

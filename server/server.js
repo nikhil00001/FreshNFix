@@ -11,6 +11,7 @@ import cartRouter from './routes/cart.js';
 import ordersRouter from './routes/orders.js';
 import wishlistRouter from './routes/wishlist.js';
 import addressRouter from './routes/address.js';
+import profile from './routes/profile.js'; // 1. Import the new route
 
 // --- This line initializes your environment variables ---
 dotenv.config();
@@ -44,7 +45,7 @@ mongoose.connect(process.env.MONGO_URI)
 // New Cognito auth routes
 app.post('/api/auth/start', startAuth);
 app.post('/api/auth/verify', verifyOtp);
-
+app.use('/api/profile', profile); // 2. Add this line
 // The rest of your application routes
 app.use('/api/products', productsRouter);
 app.use('/api/cart', cartRouter);
