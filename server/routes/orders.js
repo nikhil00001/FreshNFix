@@ -6,10 +6,17 @@ import Order from '../models/Order.js';
 import User from '../models/User.js';
 import dbConnect from '../lib/dbConnect.js';
 
+
 // POST to place an order (Private)
 router.post('/', cognitoAuth, async (req, res) => {
   await dbConnect();
-  const { shippingAddress, fixedDeliverySlot } = req.body;
+  // 1. Destructure the new paymentMethod field from the request body
+  const { shippingAddress, fixedDeliverySlot, paymentMethod } = req.body;
+
+  // Basic validation
+  if (!paymentMethod) {
+    return res.status(400).json({ msg: 'Payment method is required' });
+  }
 
   try {
     const user = await User.findOne({ phone: req.user.phone }).populate('cart.product');
@@ -22,25 +29,25 @@ router.post('/', cognitoAuth, async (req, res) => {
         return acc + item.product.price * item.quantity;
       }
       return acc;
-    }, 50); // Start with delivery fee
+    }, 40); // Hardcoded delivery fee (changed from 50 to 40 to match frontend)
 
     const newOrder = new Order({
       user: user._id,
       items: user.cart.map(item => ({
-        // --- THIS IS THE FIX ---
-        // Create an item object that perfectly matches your OrderSchema
         product: item.product._id,
         quantity: item.quantity,
-        price: item.product.price // Capture the price at the time of purchase
+        price: item.product.price,
       })),
       totalAmount,
       shippingAddress,
       fixedDeliverySlot,
+      // 2. Set the status and payment method based on the user's choice
+      paymentMethod: paymentMethod,
+      status: paymentMethod === 'UPI' ? 'Pending Payment' : 'Pending',
     });
 
     const order = await newOrder.save();
     
-    // Clear the user's cart after the order is successfully created
     user.cart = [];
     await user.save();
 

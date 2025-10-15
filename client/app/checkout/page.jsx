@@ -13,9 +13,9 @@ export default function CheckoutPage() {
   const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [deliverySlot, setDeliverySlot] = useState('');
-  // NEW: State for the inline address form
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [newAddress, setNewAddress] = useState({ street: '', city: '', state: '', pincode: '', phone: '' });
+  const [paymentMethod, setPaymentMethod] = useState('COD'); // Default to COD
 
 
   // Fetch addresses when the component loads
@@ -70,8 +70,7 @@ export default function CheckoutPage() {
   const total = subtotal + 40; // Hardcoded delivery fee
 
   // ... inside the CheckoutPage component ...
-
-const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async () => {
     if (!deliverySlot) {
       toast.error('Please select a delivery slot.');
       return;
@@ -87,17 +86,30 @@ const handlePlaceOrder = async () => {
       const res = await fetch(`${apiUrl}/api/orders`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ shippingAddress: selectedAddress, fixedDeliverySlot: deliverySlot }),
+          // Send the selected payment method to the backend
+          body: JSON.stringify({ 
+            shippingAddress: selectedAddress, 
+            fixedDeliverySlot: deliverySlot,
+            paymentMethod: paymentMethod 
+          }),
       });
 
-      if (res.ok) {
-        toast.success('Order placed successfully!');
-        clearCart(); 
-        router.push('/order-success');
-      } else {
+      if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.msg || 'Failed to place order');
       }
+
+      const order = await res.json();
+      toast.success('Order placed successfully!');
+      clearCart(); 
+
+      // Conditional redirect based on payment method
+      if (paymentMethod === 'UPI') {
+        router.push(`/payment-instructions?orderId=${order._id}&amount=${order.totalAmount}`);
+      } else {
+        router.push('/order-success');
+      }
+
     } catch (error) {
       console.error(error);
       toast.error(`Error: ${error.message}`);
@@ -156,7 +168,22 @@ const handlePlaceOrder = async () => {
               </form>
             )}
           </div>
+
+          {/* NEW: Payment Method Section */}
+          <h2 className="text-2xl font-semibold mt-8 mb-4">3. Payment Method</h2>
+          <div className="space-y-3">
+            <div onClick={() => setPaymentMethod('COD')} className={`p-4 border-2 rounded-md cursor-pointer ${paymentMethod === 'COD' ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}>
+              <p className="font-semibold">Cash on Delivery (COD)</p>
+              <p className="text-sm text-gray-500">Pay with cash when your order is delivered.</p>
+            </div>
+            <div onClick={() => setPaymentMethod('UPI')} className={`p-4 border-2 rounded-md cursor-pointer ${paymentMethod === 'UPI' ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}>
+              <p className="font-semibold">Pay with UPI / QR Code</p>
+              <p className="text-sm text-gray-500">Order will be processed after payment confirmation.</p>
+            </div>
+          </div>
         </div>
+
+        
 
         <div className="bg-gray-100 p-6 rounded-lg">
           <h2 className="text-2xl font-bold mb-4">Order Summary</h2>
@@ -180,9 +207,9 @@ const handlePlaceOrder = async () => {
             onClick={handlePlaceOrder}
             className="w-full mt-6 bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 font-semibold"
           >
-            Place Order & Pay
+            {/* Change button text based on selection */}
+            {paymentMethod === 'COD' ? 'Place Order' : 'Proceed to Payment'}
           </button>
-          <p className="text-xs text-center mt-2">Payment integration with Stripe/Razorpay would happen here.</p>
         </div>
       </div>
     </div>
