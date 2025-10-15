@@ -70,7 +70,8 @@ export default function AdminOrdersPage() {
             {orders.map(order => (
               <tr key={order._id}>
                 <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm text-gray-600">{order._id}</td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">{order.user.name}</td>
+                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">{order.user?.name ?? 'Deleted User'}
+                </td>
                 <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">{new Date(order.createdAt).toLocaleDateString()}</td>
                 <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">₹{order.totalAmount.toFixed(2)}</td>
                 <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
