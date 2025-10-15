@@ -3,6 +3,8 @@
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic'; // <-- ADD THIS LINE
+
 export default function PaymentInstructionsPage() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
