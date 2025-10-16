@@ -7,16 +7,13 @@ const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
-  // --- 💡 CHANGE 1: Add a loading state, default to true ---
-  const [loading, setLoading] = useState(true); 
+  const [loading, setLoading] = useState(true);
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
-  // Fetch the cart when the component mounts
   useEffect(() => {
     const fetchCart = async () => {
-      // --- 💡 CHANGE 2: Ensure loading is true at the start ---
-      setLoading(true); 
+      setLoading(true);
       const token = localStorage.getItem('token');
       if (token) {
         try {
@@ -30,12 +27,9 @@ export const CartProvider = ({ children }) => {
           }
         } catch (error) {
           console.error('Failed to fetch cart:', error);
-          // Optional: Show a toast error if cart fetching fails
-          // toast.error("Could not load your cart.");
         }
       }
-      // --- 💡 CHANGE 3: Set loading to false after everything is done ---
-      setLoading(false); 
+      setLoading(false);
     };
     fetchCart();
   }, []);
@@ -59,13 +53,35 @@ export const CartProvider = ({ children }) => {
       if (res.ok) {
         const updatedCart = await res.json();
         setCart(updatedCart);
-        toast.success('Item added to cart!');
+        // We show the toast only when adding the *first* item
+        const itemInCart = cart.find(item => item.product._id === productId);
+        if (!itemInCart) {
+            toast.success('Item added to cart!');
+        }
       } else {
         throw new Error('Failed to add item');
       }
     } catch (error) {
       console.error('Failed to add to cart:', error);
       toast.error('Could not add item to cart.');
+    }
+  };
+
+  // --- NEW: Function to decrement quantity or remove item ---
+  const decrementFromCart = async (productId) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    // Find the current quantity to decide which endpoint to call
+    const itemInCart = cart.find(item => item.product._id === productId);
+    if (!itemInCart) return;
+
+    if (itemInCart.quantity === 1) {
+      // If quantity is 1, removing it is the same as decrementing
+      await removeFromCart(productId);
+    } else {
+      // Otherwise, just update the quantity
+      await updateQuantity(productId, itemInCart.quantity - 1);
     }
   };
 
@@ -86,7 +102,7 @@ export const CartProvider = ({ children }) => {
       console.error('Failed to update quantity:', error);
     }
   };
-  
+
   const removeFromCart = async (productId) => {
     const token = localStorage.getItem('token');
     try {
@@ -103,17 +119,17 @@ export const CartProvider = ({ children }) => {
       console.error('Failed to remove item:', error);
     }
   };
-   
+
   const clearCart = () => {
-    setCart([]); // Simply set the cart state to an empty array
+    setCart([]);
   };
-  
+
   return (
-    // --- 💡 CHANGE 4: Add loading to the provider's value ---
-    <CartContext.Provider value={{ cart, loading, cartCount, addToCart, updateQuantity, removeFromCart, clearCart }}>
+    // --- Add the new 'decrementFromCart' function to the context value ---
+    <CartContext.Provider value={{ cart, loading, cartCount, addToCart, decrementFromCart, updateQuantity, removeFromCart, clearCart }}>
       {children}
     </CartContext.Provider>
   );
 };
-  
+
 export default CartContext;
