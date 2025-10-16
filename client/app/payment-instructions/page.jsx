@@ -3,11 +3,11 @@ export const fetchCache = 'force-no-store';
 
 "use client";
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-
-export default function PaymentInstructionsPage() {
+function PaymentContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
   const totalAmount = searchParams.get('amount');
@@ -47,5 +47,13 @@ export default function PaymentInstructionsPage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function PaymentInstructionsPage() {
+  return (
+    <Suspense fallback={<div className="text-center mt-10">Loading payment details...</div>}>
+      <PaymentContent />
+    </Suspense>
   );
 }
