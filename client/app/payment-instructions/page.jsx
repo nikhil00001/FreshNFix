@@ -1,9 +1,11 @@
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 "use client";
 
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-export const dynamic = 'force-dynamic'; // <-- ADD THIS LINE
 
 export default function PaymentInstructionsPage() {
   const searchParams = useSearchParams();
