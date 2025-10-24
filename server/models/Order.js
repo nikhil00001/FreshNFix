@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-
+    
 const OrderSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -7,7 +7,6 @@ const OrderSchema = new mongoose.Schema({
     required: true,
   },
   items: [{
-    // --- 💡 SOLUTION: Change product to be a reference to the Product model ---
     product: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Product',
@@ -17,10 +16,9 @@ const OrderSchema = new mongoose.Schema({
       type: Number,
       required: true
     },
-    // Storing the price at the time of order is good practice
     price: {
-        type: Number,
-        required: true
+      type: Number,
+      required: true
     }
   }],
   totalAmount: {
@@ -34,12 +32,30 @@ const OrderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    default: 'Pending', // e.g., Pending, Processing, Shipped, Delivered
+    enum: ['Pending', 'Pending Payment', 'Processing', 'Out for Delivery', 'Delivered', 'Cancelled'],
+    default: 'Pending',
+  },
+  // --- NEW & UPDATED PAYMENT FIELDS ---
+  paymentMethod: {
+    type: String,
+    enum: ['COD', 'Razorpay'],
+    required: true
   },
   paymentStatus: {
     type: String,
-    default: 'Paid', // Assuming payment is successful
+    enum: ['Pending', 'Paid', 'Failed'],
+    default: 'Pending',
   },
+  razorpay_payment_id: {
+    type: String,
+  },
+  razorpay_order_id: {
+    type: String,
+  },
+  razorpay_signature: {
+    type: String,
+  },
+  // ------------------------------------
   fixedDeliverySlot: {
     type: String,
     required: true
@@ -48,3 +64,4 @@ const OrderSchema = new mongoose.Schema({
 
 const Order = mongoose.model('Order', OrderSchema);
 export default Order;
+
