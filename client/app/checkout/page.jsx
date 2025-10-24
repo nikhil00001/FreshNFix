@@ -18,11 +18,12 @@ export default function CheckoutPage() {
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [newAddress, setNewAddress] = useState({ street: '', city: '', state: '', pincode: '', phone: '' });
   
-  // NEW: State for payment method, default to Razorpay
   const [paymentMethod, setPaymentMethod] = useState('Razorpay'); 
-  
   const [userProfile, setUserProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // --- 💡 NEW FIX: State to track if Razorpay script has loaded ---
+  const [isRazorpayLoaded, setIsRazorpayLoaded] = useState(false);
 
   // Fetch user's addresses AND profile info
   useEffect(() => {
@@ -82,8 +83,7 @@ export default function CheckoutPage() {
   const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
   const total = subtotal + 40;
 
-  // --- NEW: COD Order Function ---
-  // This function handles placing a Cash on Delivery order
+  // --- COD Order Function ---
   const processCodOrder = async () => {
     setIsLoading(true);
     const token = localStorage.getItem('token');
@@ -114,11 +114,11 @@ export default function CheckoutPage() {
     } catch (error) {
       console.error(error);
       toast.error(error.message || 'Could not place order. Please try again.');
-      setIsLoading(false); // Only set loading false if it fails
+      setIsLoading(false); 
     }
   };
 
-  // --- This is your existing Razorpay payment function ---
+  // --- Razorpay payment function ---
   const processRazorpayPayment = async () => {
     setIsLoading(true);
     const token = localStorage.getItem('token');
@@ -208,9 +208,9 @@ export default function CheckoutPage() {
     }
   };
 
-  // --- NEW: This single function decides which flow to start ---
+  // --- Main handler function ---
   const handlePlaceOrder = async () => {
-    // Shared validation for both payment methods
+    // Shared validation
     if (!deliverySlot) {
       toast.error('Please select a delivery slot.');
       return;
@@ -220,9 +220,13 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Call the correct function based on the selected payment method
+    // Call the correct function
     if (paymentMethod === 'Razorpay') {
-      // Razorpay also needs the user profile to be loaded
+      // --- 💡 NEW FIX: Check if Razorpay is loaded before proceeding ---
+      if (!isRazorpayLoaded) {
+        toast.error('Payment gateway is still loading. Please wait a moment and try again.');
+        return;
+      }
       if (!userProfile) {
         toast.error('User profile not loaded. Please wait a moment.');
         return;
@@ -235,10 +239,11 @@ export default function CheckoutPage() {
 
   return (
     <>
-      {/* This script is needed for Razorpay */}
+      {/* --- 💡 NEW FIX: Add onLoad prop to update state --- */}
       <Script
         id="razorpay-checkout-js"
         src="https.checkout.razorpay.com/v1/checkout.js"
+        onLoad={() => setIsRazorpayLoaded(true)}
       />
 
       <div className="container mx-auto px-4 py-8">
@@ -278,7 +283,7 @@ export default function CheckoutPage() {
               )}
             </div>
             
-            {/* --- RE-ADDED: Payment Method Selection UI --- */}
+            {/* --- Payment Method Selection UI --- */}
             <h2 className="text-2xl font-semibold mt-8 mb-4">3. Payment Method</h2>
             <div className="space-y-3">
               <div 
@@ -322,15 +327,18 @@ export default function CheckoutPage() {
               </div>
             </div>
             
-            {/* --- UPDATED: Main Action Button --- */}
+            {/* --- 💡 NEW FIX: Update disabled logic --- */}
             <button 
               onClick={handlePlaceOrder} 
-              disabled={isLoading}
+              disabled={isLoading || (paymentMethod === 'Razorpay' && !isRazorpayLoaded)}
               className="w-full mt-6 bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 font-semibold disabled:bg-blue-300 disabled:cursor-not-allowed"
             >
-              {/* Button text changes based on selection */}
               {isLoading ? 'Processing...' : (paymentMethod === 'COD' ? 'Place Order' : 'Place Order & Pay')}
             </button>
+            {/* Helpful message for the user if the button is disabled */}
+            {paymentMethod === 'Razorpay' && !isRazorpayLoaded && (
+              <p className="text-xs text-center text-gray-500 mt-2">Initializing secure payment...</p>
+            )}
           </div>
         </div>
       </div>
