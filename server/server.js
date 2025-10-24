@@ -13,6 +13,7 @@ import wishlistRouter from './routes/wishlist.js';
 import addressRouter from './routes/address.js';
 import profile from './routes/profile.js'; // 1. Import the new route
 import payments from './routes/payments.js'; // 1. IMPORT THE NEW ROUTE
+import codRoutes from './routes/codRoutes.js';
 
 
 // --- This line initializes your environment variables ---
@@ -49,6 +50,7 @@ app.post('/api/auth/start', startAuth);
 app.post('/api/auth/verify', verifyOtp);
 app.use('/api/profile', profile); // 2. Add this line
 app.use('/api/payment', payments); // 2. ADD THIS LINE
+app.use('/api/cod', codRoutes);
 
 // The rest of your application routes
 app.use('/api/products', productsRouter);

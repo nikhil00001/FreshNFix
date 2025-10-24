@@ -4,7 +4,9 @@ import { useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import CartContext from '@/context/CartContext';
 import toast from 'react-hot-toast';
-import Script from 'next/script'; // 1. Import the Script component
+import Script from 'next/script';
+
+export const dynamic = 'force-dynamic'; // Ensures the page is dynamic
 
 export default function CheckoutPage() {
   const { cart, clearCart } = useContext(CartContext);
@@ -16,11 +18,13 @@ export default function CheckoutPage() {
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [newAddress, setNewAddress] = useState({ street: '', city: '', state: '', pincode: '', phone: '' });
   
-  // 2. Add state for user profile and loading
+  // NEW: State for payment method, default to Razorpay
+  const [paymentMethod, setPaymentMethod] = useState('Razorpay'); 
+  
   const [userProfile, setUserProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 3. Fetch user's addresses AND profile info
+  // Fetch user's addresses AND profile info
   useEffect(() => {
     const token = localStorage.getItem('token');
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -56,7 +60,6 @@ export default function CheckoutPage() {
 
   const handleAddAddress = async (e) => {
     e.preventDefault();
-    // ... (Your existing add address logic - no changes needed)
     const token = localStorage.getItem('token');
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     const res = await fetch(`${apiUrl}/api/address`, {
@@ -79,21 +82,44 @@ export default function CheckoutPage() {
   const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
   const total = subtotal + 40;
 
-  // 4. --- THIS IS THE NEW PAYMENT FUNCTION ---
-  const handlePayment = async () => {
-    if (!deliverySlot) {
-      toast.error('Please select a delivery slot.');
-      return;
-    }
-    if (!selectedAddress) {
-      toast.error('Please select a shipping address.');
-      return;
-    }
-    if (!userProfile) {
-      toast.error('User profile not loaded. Please wait a moment.');
-      return;
-    }
+  // --- NEW: COD Order Function ---
+  // This function handles placing a Cash on Delivery order
+  const processCodOrder = async () => {
+    setIsLoading(true);
+    const token = localStorage.getItem('token');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
+    try {
+      const res = await fetch(`${apiUrl}/api/cod/place-order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          shippingAddress: selectedAddress,
+          fixedDeliverySlot: deliverySlot,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.msg || 'Failed to place COD order.');
+      }
+
+      toast.success('Order placed successfully!');
+      clearCart();
+      router.push('/order-success');
+
+    } catch (error) {
+      console.error(error);
+      toast.error(error.message || 'Could not place order. Please try again.');
+      setIsLoading(false); // Only set loading false if it fails
+    }
+  };
+
+  // --- This is your existing Razorpay payment function ---
+  const processRazorpayPayment = async () => {
     setIsLoading(true);
     const token = localStorage.getItem('token');
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -123,7 +149,6 @@ export default function CheckoutPage() {
         description: "Grocery Payment",
         order_id: orderId,
         
-        // This function runs after successful payment
         handler: async function (response) {
           try {
             // Step 3: Verify the payment on your server
@@ -170,7 +195,6 @@ export default function CheckoutPage() {
       const rzp = new window.Razorpay(options);
       rzp.open();
 
-      // Handle payment modal close
       rzp.on('payment.failed', function (response) {
         console.error(response.error);
         toast.error('Payment failed. Please try again.');
@@ -184,12 +208,37 @@ export default function CheckoutPage() {
     }
   };
 
+  // --- NEW: This single function decides which flow to start ---
+  const handlePlaceOrder = async () => {
+    // Shared validation for both payment methods
+    if (!deliverySlot) {
+      toast.error('Please select a delivery slot.');
+      return;
+    }
+    if (!selectedAddress) {
+      toast.error('Please select a shipping address.');
+      return;
+    }
+
+    // Call the correct function based on the selected payment method
+    if (paymentMethod === 'Razorpay') {
+      // Razorpay also needs the user profile to be loaded
+      if (!userProfile) {
+        toast.error('User profile not loaded. Please wait a moment.');
+        return;
+      }
+      await processRazorpayPayment();
+    } else if (paymentMethod === 'COD') {
+      await processCodOrder();
+    }
+  };
+
   return (
     <>
-      {/* 5. Add the Razorpay Script to the page */}
+      {/* This script is needed for Razorpay */}
       <Script
         id="razorpay-checkout-js"
-        src="https://checkout.razorpay.com/v1/checkout.js"
+        src="https.checkout.razorpay.com/v1/checkout.js"
       />
 
       <div className="container mx-auto px-4 py-8">
@@ -216,19 +265,40 @@ export default function CheckoutPage() {
               </button>
               {showAddressForm && (
                 <form onSubmit={handleAddAddress} className="bg-white p-6 rounded-lg shadow-md border space-y-4">
-                  {/* ... (Your existing address form) ... */}
+                  <h3 className="font-semibold text-lg">Add a new address</h3>
+                  <input name="street" value={newAddress.street} onChange={handleAddressChange} placeholder="Street, House No." className="w-full p-2 border rounded" required />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input name="city" value={newAddress.city} onChange={handleAddressChange} placeholder="City" className="w-full p-2 border rounded" required />
+                    <input name="state" value={newAddress.state} onChange={handleAddressChange} placeholder="State" className="w-full p-2 border rounded" required />
+                    <input name="pincode" value={newAddress.pincode} onChange={handleAddressChange} placeholder="Pincode" className="w-full p-2 border rounded" required />
+                  </div>
+                  <input name="phone" value={newAddress.phone} onChange={handleAddressChange} placeholder="Phone Number" className="w-full p-2 border rounded" required />
+                  <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">Save Address</button>
                 </form>
               )}
             </div>
             
-            {/* 6. We've removed the COD/UPI selection. It's now Razorpay-only */}
+            {/* --- RE-ADDED: Payment Method Selection UI --- */}
             <h2 className="text-2xl font-semibold mt-8 mb-4">3. Payment Method</h2>
-            <div className="p-4 border-2 rounded-md border-blue-500 bg-blue-50">
-              <p className="font-semibold">Secure Online Payment</p>
-              <p className="text-sm text-gray-500">You will be redirected to pay with UPI, Cards, Netbanking, or Wallets via Razorpay.</p>
+            <div className="space-y-3">
+              <div 
+                onClick={() => setPaymentMethod('Razorpay')} 
+                className={`p-4 border-2 rounded-md cursor-pointer ${paymentMethod === 'Razorpay' ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}
+              >
+                <p className="font-semibold">Secure Online Payment</p>
+                <p className="text-sm text-gray-500">Pay with UPI, Cards, Netbanking, or Wallets.</p>
+              </div>
+              <div 
+                onClick={() => setPaymentMethod('COD')} 
+                className={`p-4 border-2 rounded-md cursor-pointer ${paymentMethod === 'COD' ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}
+              >
+                <p className="font-semibold">Cash on Delivery (COD)</p>
+                <p className="text-sm text-gray-500">Pay with cash when your order is delivered.</p>
+              </div>
             </div>
           </div>
 
+          {/* --- Order Summary Card --- */}
           <div className="bg-gray-100 p-6 rounded-lg">
             <h2 className="text-2xl font-bold mb-4">Order Summary</h2>
             {cart.map(item => (
@@ -251,13 +321,15 @@ export default function CheckoutPage() {
                 <span>₹{total.toFixed(2)}</span>
               </div>
             </div>
-            {/* 7. The button now calls handlePayment and shows a loading state */}
+            
+            {/* --- UPDATED: Main Action Button --- */}
             <button 
-              onClick={handlePayment} 
+              onClick={handlePlaceOrder} 
               disabled={isLoading}
               className="w-full mt-6 bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 font-semibold disabled:bg-blue-300 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Processing...' : 'Place Order & Pay'}
+              {/* Button text changes based on selection */}
+              {isLoading ? 'Processing...' : (paymentMethod === 'COD' ? 'Place Order' : 'Place Order & Pay')}
             </button>
           </div>
         </div>
@@ -265,3 +337,4 @@ export default function CheckoutPage() {
     </>
   );
 }
+
