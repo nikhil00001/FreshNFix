@@ -19,6 +19,7 @@ export default function CheckoutPage() {
   // 2. Add state for user profile and loading
   const [userProfile, setUserProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('Online'); // NEW: State for payment method
 
   // 3. Fetch user's addresses AND profile info
   useEffect(() => {
@@ -79,7 +80,9 @@ export default function CheckoutPage() {
   const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
   const total = subtotal + 40;
 
-  // 4. --- THIS IS THE NEW PAYMENT FUNCTION ---
+
+
+  // --- UPDATED PAYMENT FUNCTION ---
   const handlePayment = async () => {
     if (!deliverySlot) {
       toast.error('Please select a delivery slot.');
@@ -93,94 +96,97 @@ export default function CheckoutPage() {
       toast.error('User profile not loaded. Please wait a moment.');
       return;
     }
-
+    
+      
     setIsLoading(true);
     const token = localStorage.getItem('token');
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-    try {
-      // Step 1: Create a payment order on your server
-      const orderRes = await fetch(`${apiUrl}/api/payment/create-order`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-      });
-
-      if (!orderRes.ok) {
-        throw new Error('Failed to create payment order.');
-      }
-
-      const { orderId, amount, keyId } = await orderRes.json();
-
-      // Step 2: Configure Razorpay options
-      const options = {
-        key: keyId,
-        amount: amount,
-        currency: "INR",
-        name: "FreshNFix",
-        description: "Grocery Payment",
-        order_id: orderId,
-        
-        // This function runs after successful payment
-        handler: async function (response) {
-          try {
-            // Step 3: Verify the payment on your server
-            const verificationRes = await fetch(`${apiUrl}/api/payment/verify-payment`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_signature: response.razorpay_signature,
-                shippingAddress: selectedAddress,
-                fixedDeliverySlot: deliverySlot,
-              }),
+    if (paymentMethod === 'COD') {
+        // --- HANDLE CASH ON DELIVERY ---
+        try {
+            const res = await fetch(`${apiUrl}/api/payment/create-cod-order`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    shippingAddress: selectedAddress,
+                    fixedDeliverySlot: deliverySlot,
+                }),
             });
 
-            if (!verificationRes.ok) {
-              throw new Error('Payment verification failed.');
+            if (!res.ok) {
+                throw new Error('Failed to place COD order.');
             }
 
-            // Step 4: Payment verified, order created in DB
             toast.success('Order placed successfully!');
             clearCart();
             router.push('/order-success');
 
-          } catch (error) {
+        } catch (error) {
             console.error(error);
-            toast.error(error.message || 'Payment verification failed. Please contact support.');
+            toast.error(error.message || 'Could not place COD order.');
+        } finally {
             setIsLoading(false);
-          }
-        },
-        prefill: {
-          name: userProfile.name || "Valued Customer",
-          phone: userProfile.phone,
-        },
-        theme: {
-          color: "#2563EB", // Your blue color
-        },
-      };
+        }
+    } else {
+        // --- HANDLE ONLINE PAYMENT (Existing Razorpay logic) ---
+        try {
+            const orderRes = await fetch(`${apiUrl}/api/payment/create-order`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            });
 
-      // Step 5: Open the Razorpay modal
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+            if (!orderRes.ok) throw new Error('Failed to create payment order.');
 
-      // Handle payment modal close
-      rzp.on('payment.failed', function (response) {
-        console.error(response.error);
-        toast.error('Payment failed. Please try again.');
-        setIsLoading(false);
-      });
-
-    } catch (error) {
-      console.error(error);
-      toast.error('An error occurred. Please try again.');
-      setIsLoading(false);
+            const { orderId, amount, keyId } = await orderRes.json();
+            const options = {
+                key: keyId,
+                amount: amount,
+                currency: "INR",
+                name: "FreshNFix",
+                description: "Grocery Payment",
+                order_id: orderId,
+                handler: async function (response) {
+                    try {
+                        const verificationRes = await fetch(`${apiUrl}/api/payment/verify-payment`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify({
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_signature: response.razorpay_signature,
+                                shippingAddress: selectedAddress,
+                                fixedDeliverySlot: deliverySlot,
+                            }),
+                        });
+                        if (!verificationRes.ok) throw new Error('Payment verification failed.');
+                        toast.success('Order placed successfully!');
+                        clearCart();
+                        router.push('/order-success');
+                    } catch (error) {
+                        console.error(error);
+                        toast.error(error.message || 'Payment verification failed.');
+                        setIsLoading(false);
+                    }
+                },
+                prefill: { name: userProfile.name || "Valued Customer", phone: userProfile.phone },
+                theme: { color: "#2563EB" },
+            };
+            const rzp = new window.Razorpay(options);
+            rzp.open();
+            rzp.on('payment.failed', function (response) {
+                console.error(response.error);
+                toast.error('Payment failed. Please try again.');
+                setIsLoading(false);
+            });
+        } catch (error) {
+            console.error(error);
+            toast.error('An error occurred. Please try again.');
+            setIsLoading(false);
+        }
     }
   };
 
@@ -221,11 +227,23 @@ export default function CheckoutPage() {
               )}
             </div>
             
-            {/* 6. We've removed the COD/UPI selection. It's now Razorpay-only */}
+            {/* --- UPDATED PAYMENT METHOD SECTION --- */}
             <h2 className="text-2xl font-semibold mt-8 mb-4">3. Payment Method</h2>
-            <div className="p-4 border-2 rounded-md border-blue-500 bg-blue-50">
-              <p className="font-semibold">Secure Online Payment</p>
-              <p className="text-sm text-gray-500">You will be redirected to pay with UPI, Cards, Netbanking, or Wallets via Razorpay.</p>
+            <div className="space-y-3">
+                <div
+                    onClick={() => setPaymentMethod('Online')}
+                    className={`p-4 border-2 rounded-md cursor-pointer ${paymentMethod === 'Online' ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}
+                >
+                    <p className="font-semibold">Secure Online Payment</p>
+                    <p className="text-sm text-gray-500">UPI, Cards, Netbanking, etc. via Razorpay.</p>
+                </div>
+                <div
+                    onClick={() => setPaymentMethod('COD')}
+                    className={`p-4 border-2 rounded-md cursor-pointer ${paymentMethod === 'COD' ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}
+                >
+                    <p className="font-semibold">Cash on Delivery</p>
+                    <p className="text-sm text-gray-500">Pay with cash when your order is delivered.</p>
+                </div>
             </div>
           </div>
 
@@ -254,10 +272,10 @@ export default function CheckoutPage() {
             {/* 7. The button now calls handlePayment and shows a loading state */}
             <button 
               onClick={handlePayment} 
-              disabled={isLoading}
+              disabled={isLoading || cart.length === 0}
               className="w-full mt-6 bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 font-semibold disabled:bg-blue-300 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Processing...' : 'Place Order & Pay'}
+              {isLoading ? 'Processing...' : (paymentMethod === 'COD' ? 'Place Order' : 'Place Order & Pay')}
             </button>
           </div>
         </div>

@@ -127,5 +127,56 @@ router.post('/verify-payment', cognitoAuth, async (req, res) => {
   }
 });
 
+
+// --- NEW ROUTE FOR CASH ON DELIVERY ---
+/**
+ * @route   POST /api/payment/create-cod-order
+ * @desc    Create a new order for Cash on Delivery
+ * @access  Private
+ */
+router.post('/create-cod-order', cognitoAuth, async (req, res) => {
+    await dbConnect();
+    const { shippingAddress, fixedDeliverySlot } = req.body;
+
+    try {
+        const user = await User.findOne({ phone: req.user.phone }).populate('cart.product');
+        if (!user || user.cart.length === 0) {
+            return res.status(400).json({ msg: 'Cart is empty or user not found' });
+        }
+
+        const totalAmount = user.cart.reduce((acc, item) => {
+            if (item.product && item.product.price) {
+                return acc + item.product.price * item.quantity;
+            }
+            return acc;
+        }, 40); // 40 is your delivery fee
+
+        const newOrder = new Order({
+            user: user._id,
+            items: user.cart.map(item => ({
+                product: item.product._id,
+                quantity: item.quantity,
+                price: item.product.price,
+            })),
+            totalAmount,
+            shippingAddress,
+            fixedDeliverySlot,
+            paymentMethod: 'COD',
+            paymentStatus: 'Pending',
+            status: 'Processing',
+        });
+
+        await newOrder.save();
+
+        user.cart = [];
+        await user.save();
+
+        res.status(201).json({ success: true, orderId: newOrder._id });
+    } catch (error) {
+        console.error('Error creating COD order:', error);
+        res.status(500).json({ msg: 'Server Error' });
+    }
+});
+
 export default router;
 
