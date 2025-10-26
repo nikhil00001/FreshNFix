@@ -59,7 +59,7 @@ export default function ProductCard({ product }) {
         <div className="w-28 flex justify-end">
             {quantityInCart > 0 ? (
                 // If item is in cart, show the counter
-                <div className="flex items-center justify-between w-full h-11 bg-green-600 text-white rounded-lg font-semibold">
+                <div className="flex items-center justify-between w-full h-11 bg-blue-600 text-white rounded-lg font-semibold">
                     <button 
                         onClick={() => decrementFromCart(product._id)}
                         className="px-3 py-1"
@@ -80,7 +80,7 @@ export default function ProductCard({ product }) {
                 // If item is not in cart, show the "ADD" button
                 <button 
                     onClick={() => addToCart(product._id)}
-                    className="flex items-center justify-center w-full h-11 bg-green-100 text-green-700 rounded-lg font-bold hover:bg-green-200 transition-colors"
+                    className="flex items-center justify-center w-full h-11 bg-blue-100 text-blue-700 rounded-lg font-bold hover:bg-blue-200 transition-colors"
                     aria-label={`Add ${product.name} to cart`}
                 >
                     ADD
