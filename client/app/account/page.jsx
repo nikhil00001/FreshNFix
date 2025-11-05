@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { MapPinIcon } from '@heroicons/react/24/solid'; // Import a location icon
+import { MapPinIcon, TrashIcon } from '@heroicons/react/24/solid'; // Import a location icon
 
 
 export default function AccountPage() {
@@ -92,6 +92,36 @@ export default function AccountPage() {
     }
   };
 
+  // --- NEW: Function to handle address deletion ---
+  const handleDeleteAddress = async (addressId) => {
+    // 1. Confirm with the user
+    if (!window.confirm('Are you sure you want to delete this address?')) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const toastId = toast.loading('Deleting address...');
+
+    try {
+      // 2. Make the API call
+      const res = await fetch(`${apiUrl}/api/address/${addressId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        // 3. Update the state locally to remove the address
+        setAddresses(addresses.filter(addr => addr._id !== addressId));
+        toast.success('Address deleted!', { id: toastId });
+      } else {
+        throw new Error('Failed to delete address');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Could not delete address.', { id: toastId });
+    }
+  };
 
   // --- NEW: Function to get location and pre-fill the form ---
   const handleGetCurrentLocation = async () => {
@@ -210,6 +240,15 @@ export default function AccountPage() {
                     <p className="font-semibold">{addr.street}</p>
                     <p>{addr.city}, {addr.state} - {addr.pincode}</p>
                     <p>Phone: {addr.phone}</p>
+
+                    {/* --- NEW: Delete button --- */}
+                    <button 
+                      onClick={() => handleDeleteAddress(addr._id)}
+                      className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-600"
+                      aria-label="Delete address"
+                    >
+                      <TrashIcon className="h-5 w-5" />
+                    </button>
                 </div>
             ))}
         </div>
