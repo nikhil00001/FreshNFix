@@ -44,22 +44,33 @@ export default function ProductCard({ product }) {
           />
         </div>
         <div className="p-4 pt-2">
-          <h3 className="text-lg font-semibold text-gray-800 truncate">{product.name}</h3>
+          {/*<h3 className="text-lg font-semibold text-gray-800 truncate">{product.name}</h3>*/}
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800 truncate">{product.name}</h3>
           <p className="text-sm text-gray-500 mb-3">{product.category}</p>
         </div>
       </Link>
       
-      <div className="px-4 pb-4 flex items-center justify-between mt-auto">
+      {/*<div className="px-4 pb-4 flex items-center justify-between mt-auto">
         <p className="text-xl font-bold text-gray-900">
           ₹{product.price}
           <span className="text-base font-medium text-gray-500"> / {product.unit}</span>
         </p>
+      */}
+      
+      {/* --- 2. Made this padding responsive to give a bit more space --- */}
+      <div className="px-3 sm:px-4 pb-4 flex items-center justify-between mt-auto">
+        {/* --- 3. Made price text responsive --- */}
+        <p className="text-lg sm:text-xl font-bold text-gray-900">
+          ₹{product.price}
+          {/* --- 4. Made unit text responsive --- */}
+          <span className="text-sm sm:text-base font-medium text-gray-500"> / {product.unit}</span>
+        </p>
 
         {/* --- 4. Conditional Rendering Logic --- */}
-        <div className="w-28 flex justify-end">
+        <div className="w-28 sm:w-28 flex justify-end">
             {quantityInCart > 0 ? (
                 // If item is in cart, show the counter
-                <div className="flex items-center justify-between w-full h-11 bg-blue-600 text-white rounded-lg font-semibold">
+                <div className="flex items-center justify-between w-full h-11 sm:h-11 bg-blue-600 text-white rounded-lg font-semibold">
                     <button 
                         onClick={() => decrementFromCart(product._id)}
                         className="px-3 py-1"
@@ -80,7 +91,7 @@ export default function ProductCard({ product }) {
                 // If item is not in cart, show the "ADD" button
                 <button 
                     onClick={() => addToCart(product._id)}
-                    className="flex items-center justify-center w-full h-11 bg-blue-100 text-blue-700 rounded-lg font-bold hover:bg-blue-200 transition-colors"
+                    className="flex items-center justify-center w-full h-10 sm:h-11 bg-blue-100 text-blue-700 rounded-lg font-bold hover:bg-blue-200 transition-colors text-sm sm:text-base"
                     aria-label={`Add ${product.name} to cart`}
                 >
                     ADD
