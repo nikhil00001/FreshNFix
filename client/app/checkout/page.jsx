@@ -222,8 +222,16 @@ export default function CheckoutPage() {
               </button>
               {showAddressForm && (
                 <form onSubmit={handleAddAddress} className="bg-white p-6 rounded-lg shadow-md border space-y-4">
-                  {/* ... (Your existing address form) ... */}
-                </form>
+                <h3 className="font-semibold text-lg">Add a new address</h3>
+                <input name="street" value={newAddress.street} onChange={handleAddressChange} placeholder="Street, House No." className="w-full p-2 border rounded" required />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input name="city" value={newAddress.city} onChange={handleAddressChange} placeholder="City" className="w-full p-2 border rounded" required />
+                    <input name="state" value={newAddress.state} onChange={handleAddressChange} placeholder="State" className="w-full p-2 border rounded" required />
+                    <input name="pincode" value={newAddress.pincode} onChange={handleAddressChange} placeholder="Pincode" className="w-full p-2 border rounded" required />
+                </div>
+                <input name="phone" value={newAddress.phone} onChange={handleAddressChange} placeholder="Phone Number" className="w-full p-2 border rounded" required />
+                <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">Save Address</button>
+              </form>
               )}
             </div>
             
