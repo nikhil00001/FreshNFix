@@ -50,27 +50,32 @@ export default function ProductCard({ product }) {
         </div>
       </Link>
       
-      {/*<div className="px-4 pb-4 flex items-center justify-between mt-auto">
-        <p className="text-xl font-bold text-gray-900">
-          ₹{product.price}
-          <span className="text-base font-medium text-gray-500"> / {product.unit}</span>
-        </p>
-      */}
       
-      {/* --- 2. Made this padding responsive to give a bit more space --- */}
-      <div className="px-3 sm:px-4 pb-4 flex items-center justify-between mt-auto">
-        {/* --- 3. Made price text responsive --- */}
-        <p className="text-lg sm:text-xl font-bold text-gray-900">
-          ₹{product.price}
-          {/* --- 4. Made unit text responsive --- */}
-          <span className="text-sm sm:text-base font-medium text-gray-500"> / {product.unit}</span>
-        </p>
+      {/* --- START: Responsive Layout Container --- */}
+      {/* Default: Stacked layout (mobile)
+        md: (medium breakpoint): Switches to flex (horizontal) layout
+      */}
+      <div className="px-3 pb-4 mt-auto md:flex md:items-center md:justify-between md:px-4">
+        
+        {/* --- Price Section --- */}
+        {/* Default: Has margin-bottom for stacking
+          md: Removes margin-bottom for horizontal layout
+        */}
+        <div className="mb-3 md:mb-0">
+          <p className="text-lg sm:text-xl font-bold text-gray-900">
+            ₹{product.price}
+            <span className="text-sm sm:text-base font-medium text-gray-500"> / {product.unit}</span>
+          </p>
+        </div>
 
-        {/* --- 4. Conditional Rendering Logic --- */}
-        <div className="w-28 sm:w-28 flex justify-end">
+        {/* --- Button Section --- */}
+        {/* Default: Full width (w-full) for stacked layout
+          md: Fixed width (w-28) for horizontal layout
+        */}
+        <div className="w-full md:w-28">
             {quantityInCart > 0 ? (
-                // If item is in cart, show the counter
-                <div className="flex items-center justify-between w-full h-11 sm:h-11 bg-blue-600 text-white rounded-lg font-semibold">
+                // Counter
+                <div className="flex items-center justify-between w-full h-10 sm:h-11 bg-blue-600 text-white rounded-lg font-semibold">
                     <button 
                         onClick={() => decrementFromCart(product._id)}
                         className="px-3 py-1"
@@ -78,7 +83,7 @@ export default function ProductCard({ product }) {
                     >
                         <MinusIcon className="h-5 w-5" />
                     </button>
-                    <span className="px-2">{quantityInCart}</span>
+                    <span className="px-2" aria-live="polite">{quantityInCart}</span>
                     <button 
                         onClick={() => addToCart(product._id)}
                         className="px-3 py-1"
@@ -88,7 +93,7 @@ export default function ProductCard({ product }) {
                     </button>
                 </div>
             ) : (
-                // If item is not in cart, show the "ADD" button
+                // ADD Button
                 <button 
                     onClick={() => addToCart(product._id)}
                     className="flex items-center justify-center w-full h-10 sm:h-11 bg-blue-100 text-blue-700 rounded-lg font-bold hover:bg-blue-200 transition-colors text-sm sm:text-base"
@@ -98,8 +103,9 @@ export default function ProductCard({ product }) {
                 </button>
             )}
         </div>
-
       </div>
+      {/* --- END: Responsive Layout Container --- */}
+      
     </div>
   );
 }
