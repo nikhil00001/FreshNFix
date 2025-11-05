@@ -3,9 +3,11 @@
 import { useContext } from 'react';
 import CartContext from '@/context/CartContext';
 import Link from 'next/link';
+import { PlusIcon, MinusIcon } from '@heroicons/react/24/solid';
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart, loading } = useContext(CartContext);
+  //const { cart, updateQuantity, removeFromCart, loading } = useContext(CartContext);
+  const { cart, removeFromCart, loading, addToCart, decrementFromCart } = useContext(CartContext);
 
   // 💡 SOLUTION: Wait for the data to be ready
   if (loading) {
@@ -43,13 +45,25 @@ export default function CartPage() {
                 <p className="text-gray-600">₹{item.product.price}</p>
               </div>
               <div className="flex items-center space-x-3">
-                <input
-                  type="number"
-                  min="1"
-                  value={item.quantity}
-                  onChange={(e) => updateQuantity(item.product._id, parseInt(e.target.value))}
-                  className="w-16 text-center border rounded-md py-2 font-semibold"
-                />
+                {/* --- 3. This is the new blue controller --- */}
+                <div className="flex items-center justify-between w-28 h-11 bg-blue-600 text-white rounded-lg font-semibold">
+                  <button 
+                    onClick={() => decrementFromCart(item.product._id)}
+                    className="px-3 py-1 rounded-l-lg hover:bg-blue-700 transition-colors"
+                    aria-label={`Decrease quantity of ${item.product.name}`}
+                  >
+                    <MinusIcon className="h-5 w-5" />
+                  </button>
+                  <span className="px-2" aria-live="polite">{item.quantity}</span>
+                  <button 
+                    onClick={() => addToCart(item.product._id)}
+                    className="px-3 py-1 rounded-r-lg hover:bg-blue-700 transition-colors"
+                    aria-label={`Increase quantity of ${item.product.name}`}
+                  >
+                    <PlusIcon className="h-5 w-5" />
+                  </button>
+                </div>
+                {/* --- End of new controller --- */}
                 <button onClick={() => removeFromCart(item.product._id)} className="text-red-500 hover:text-red-700">
                   Remove
                 </button>
