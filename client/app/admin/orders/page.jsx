@@ -61,6 +61,7 @@ export default function AdminOrdersPage() {
             <tr>
               <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase">Order ID</th>
               <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase">Customer</th>
+              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase">Phone</th>
               <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase">Date</th>
               <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase">Total</th>
               <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
@@ -70,8 +71,8 @@ export default function AdminOrdersPage() {
             {orders.map(order => (
               <tr key={order._id}>
                 <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm text-gray-600">{order._id}</td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">{order.user?.name ?? 'Deleted User'}
-                </td>
+                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">{order.user?.name ?? 'N/A'}</td>
+                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">{order.user?.phone ?? 'N/A'}</td>
                 <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">{new Date(order.createdAt).toLocaleDateString()}</td>
                 <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">₹{order.totalAmount.toFixed(2)}</td>
                 <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
