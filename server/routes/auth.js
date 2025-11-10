@@ -1,4 +1,4 @@
-import { CognitoIdentityProviderClient, SignUpCommand, InitiateAuthCommand, RespondToAuthChallengeCommand } from "@aws-sdk/client-cognito-identity-provider";
+import { CognitoIdentityProviderClient, SignUpCommand, InitiateAuthCommand, RespondToAuthChallengeCommand, AdminConfirmSignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
 import User from "../models/User.js"; // Your MongoDB User model
 import dbConnect from '../lib/dbConnect.js';
 
@@ -10,6 +10,7 @@ const cognitoClient = new CognitoIdentityProviderClient({ region: "ap-south-1" }
 const startAuth = async (req, res) => {
     const { phone } = req.body;
     const clientId = process.env.COGNITO_APP_CLIENT_ID;
+    const userPoolId = process.env.COGNITO_USER_POOL_ID;
 
     try {
         await dbConnect();
@@ -22,6 +23,14 @@ const startAuth = async (req, res) => {
             UserAttributes: [{ Name: "phone_number", Value: phone }],
         };
         await cognitoClient.send(new SignUpCommand(signUpParams));
+
+        // *** THIS IS THE FIX ***
+        // After creating the user, immediately confirm them.
+        const confirmParams = {
+            UserPoolId: userPoolId, // <-- YOU NEED THIS
+            Username: phone,
+        };
+        await cognitoClient.send(new AdminConfirmSignUpCommand(confirmParams)); // <-- ADDED THIS LINE
     } catch (err) {
         if (err.name !== "UsernameExistsException") {
             console.error("Cognito SignUp Error:", err);
