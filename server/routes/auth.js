@@ -6,6 +6,7 @@ const cognitoClient = new CognitoIdentityProviderClient({ region: "ap-south-1" }
 
 
 // This is your updated startAuth function
+// This is your new, fully corrected startAuth function
 const startAuth = async (req, res) => {
     const { phone } = req.body;
     const clientId = process.env.COGNITO_APP_CLIENT_ID;
@@ -14,39 +15,45 @@ const startAuth = async (req, res) => {
     try {
         await dbConnect();
 
-        // We will try to sign up the user.
+        // --- Step 1: Try to create the user ---
         const signUpParams = {
             ClientId: clientId,
             Username: phone,
             Password: `aB1!${Date.now()}`, // Dummy password
             UserAttributes: [{ Name: "phone_number", Value: phone }],
         };
-
         await cognitoClient.send(new SignUpCommand(signUpParams));
+        console.log(`Successfully created new user: ${phone}`);
 
-        // After creating the user, immediately confirm them.
+    } catch (err) {
+        if (err.name === "UsernameExistsException") {
+            // This is OK. It just means the user is already in Cognito.
+            console.log(`User ${phone} already exists.`);
+        } else {
+            // A different, unexpected error
+            console.error("CRITICAL SIGNUP ERROR:", err);
+            return res.status(500).json({ msg: "Failed during sign-up", error: err.name });
+        }
+    }
+
+    // --- Step 2: Admin-confirm the user ---
+    // We run this for *both* new users and existing (but possibly unconfirmed) users.
+    // This is the key fix.
+    try {
         const confirmParams = {
             UserPoolId: userPoolId,
             Username: phone,
         };
         await cognitoClient.send(new AdminConfirmSignUpCommand(confirmParams));
-
-        console.log(`Successfully created and confirmed new user: ${phone}`);
-
+        console.log(`Admin-confirmed user: ${phone}`);
     } catch (err) {
-        // This is the new, improved catch block
-        if (err.name === "UsernameExistsException") {
-            // This is fine, the user already exists. We'll just log in.
-            console.log(`User ${phone} already exists, proceeding to login.`);
-        } else {
-            // This is the REAL error.
-            // It's probably 'AccessDeniedException' or 'NotAuthorizedException'.
-            console.error("CRITICAL SIGNUP/CONFIRM ERROR:", err);
-            return res.status(500).json({ msg: "Failed during admin confirmation", error: err.name });
-        }
+        // If this fails, it's 100% an IAM permission problem.
+        console.error("CRITICAL ADMIN CONFIRM ERROR:", err);
+        return res.status(500).json({ msg: "Failed during admin confirmation", error: err.name });
     }
 
-    // Now, initiate the authentication flow which will send the OTP
+    // --- Step 3: Initiate the login flow ---
+    // Now that the user is 100% CONFIRMED, this will work.
     try {
         const authParams = {
             ClientId: clientId,
@@ -57,7 +64,6 @@ const startAuth = async (req, res) => {
         res.status(200).json({ session: response.Session, msg: "OTP sent successfully." });
 
     } catch (err) {
-        // This error might be 'UserNotConfirmedException' if the admin confirm failed
         console.error("Cognito InitiateAuth Error:", err);
         res.status(500).json({ msg: "Failed to send OTP.", error: err.name });
     }
