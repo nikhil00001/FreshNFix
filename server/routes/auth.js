@@ -4,9 +4,8 @@ import dbConnect from '../lib/dbConnect.js';
 
 const cognitoClient = new CognitoIdentityProviderClient({ region: "ap-south-1" }); // e.g., "ap-south-1"
 
-// --- Step 1: Initiate Sign-Up / Sign-In with Phone ---
-// This will either start the sign-up process or the login process if the user exists.
-// Cognito handles sending the OTP via SNS.
+
+// This is your updated startAuth function
 const startAuth = async (req, res) => {
     const { phone } = req.body;
     const clientId = process.env.COGNITO_APP_CLIENT_ID;
@@ -14,34 +13,41 @@ const startAuth = async (req, res) => {
 
     try {
         await dbConnect();
-        // We first try to sign up the user. If they already exist, Cognito will throw an error
-        // which we catch and then proceed with the login flow.
+
+        // We will try to sign up the user.
         const signUpParams = {
             ClientId: clientId,
             Username: phone,
-            Password: `aB1!${Date.now()}`, // A dummy password, as we use OTP
+            Password: `aB1!${Date.now()}`, // Dummy password
             UserAttributes: [{ Name: "phone_number", Value: phone }],
         };
+
         await cognitoClient.send(new SignUpCommand(signUpParams));
 
-        // *** THIS IS THE FIX ***
         // After creating the user, immediately confirm them.
         const confirmParams = {
-            UserPoolId: userPoolId, // <-- YOU NEED THIS
+            UserPoolId: userPoolId,
             Username: phone,
         };
-        await cognitoClient.send(new AdminConfirmSignUpCommand(confirmParams)); // <-- ADDED THIS LINE
+        await cognitoClient.send(new AdminConfirmSignUpCommand(confirmParams));
+
+        console.log(`Successfully created and confirmed new user: ${phone}`);
+
     } catch (err) {
-        if (err.name !== "UsernameExistsException") {
-            console.error("Cognito SignUp Error:", err);
-            return res.status(500).json({ msg: "Authentication failed" });
+        // This is the new, improved catch block
+        if (err.name === "UsernameExistsException") {
+            // This is fine, the user already exists. We'll just log in.
+            console.log(`User ${phone} already exists, proceeding to login.`);
+        } else {
+            // This is the REAL error.
+            // It's probably 'AccessDeniedException' or 'NotAuthorizedException'.
+            console.error("CRITICAL SIGNUP/CONFIRM ERROR:", err);
+            return res.status(500).json({ msg: "Failed during admin confirmation", error: err.name });
         }
-        // If user exists, we continue to the login flow below.
     }
 
     // Now, initiate the authentication flow which will send the OTP
     try {
-        await dbConnect();
         const authParams = {
             ClientId: clientId,
             AuthFlow: "CUSTOM_AUTH",
@@ -49,9 +55,11 @@ const startAuth = async (req, res) => {
         };
         const response = await cognitoClient.send(new InitiateAuthCommand(authParams));
         res.status(200).json({ session: response.Session, msg: "OTP sent successfully." });
+
     } catch (err) {
+        // This error might be 'UserNotConfirmedException' if the admin confirm failed
         console.error("Cognito InitiateAuth Error:", err);
-        res.status(500).json({ msg: "Failed to send OTP." });
+        res.status(500).json({ msg: "Failed to send OTP.", error: err.name });
     }
 };
 
