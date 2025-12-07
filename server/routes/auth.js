@@ -1,12 +1,10 @@
 import { CognitoIdentityProviderClient, SignUpCommand, InitiateAuthCommand, RespondToAuthChallengeCommand, AdminConfirmSignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
-import User from "../models/User.js"; // Your MongoDB User model
+import User from "../models/User.js"; 
 import dbConnect from '../lib/dbConnect.js';
 
-const cognitoClient = new CognitoIdentityProviderClient({ region: "ap-south-1" }); // e.g., "ap-south-1"
+// Initialize the client
+const cognitoClient = new CognitoIdentityProviderClient({ region: "ap-south-1" }); 
 
-
-// This is your updated startAuth function
-// This is your new, fully corrected startAuth function
 const startAuth = async (req, res) => {
     const { phone } = req.body;
     const clientId = process.env.COGNITO_APP_CLIENT_ID;
@@ -30,15 +28,12 @@ const startAuth = async (req, res) => {
             // This is OK. It just means the user is already in Cognito.
             console.log(`User ${phone} already exists.`);
         } else {
-            // A different, unexpected error
             console.error("CRITICAL SIGNUP ERROR:", err);
             return res.status(500).json({ msg: "Failed during sign-up", error: err.name });
         }
     }
 
-    // --- Step 2: Admin-confirm the user ---
-    // We run this for *both* new users and existing (but possibly unconfirmed) users.
-    // This is the key fix.
+    // --- Step 2: Admin-confirm the user (THE FIX IS HERE) ---
     try {
         const confirmParams = {
             UserPoolId: userPoolId,
@@ -47,13 +42,18 @@ const startAuth = async (req, res) => {
         await cognitoClient.send(new AdminConfirmSignUpCommand(confirmParams));
         console.log(`Admin-confirmed user: ${phone}`);
     } catch (err) {
-        // If this fails, it's 100% an IAM permission problem.
-        console.error("CRITICAL ADMIN CONFIRM ERROR:", err);
-        return res.status(500).json({ msg: "Failed during admin confirmation", error: err.name });
+        // CHECK: If the error is "User cannot be confirmed. Current status is CONFIRMED"
+        // We ignore it and proceed to login.
+        if (err.name === 'NotAuthorizedException' && err.message.includes('Current status is CONFIRMED')) {
+             console.log(`User ${phone} is already confirmed. Proceeding to login...`);
+        } else {
+             // If it's any OTHER error (like permissions), we stop.
+             console.error("CRITICAL ADMIN CONFIRM ERROR:", err);
+             return res.status(500).json({ msg: "Failed during admin confirmation", error: err.name });
+        }
     }
 
     // --- Step 3: Initiate the login flow ---
-    // Now that the user is 100% CONFIRMED, this will work.
     try {
         const authParams = {
             ClientId: clientId,
@@ -73,7 +73,6 @@ const verifyOtp = async (req, res) => {
     const { phone, otp, session } = req.body;
     const clientId = process.env.COGNITO_APP_CLIENT_ID;
 
-    // --- FIX: This block defines the 'params' object ---
     const params = {
         ClientId: clientId,
         ChallengeName: "CUSTOM_CHALLENGE",
@@ -83,11 +82,9 @@ const verifyOtp = async (req, res) => {
             ANSWER: otp,
         },
     };
-    // --------------------------------------------------
 
     try {
         await dbConnect();
-        // Now 'params' exists and this command will work
         const response = await cognitoClient.send(new RespondToAuthChallengeCommand(params));
         
         const idToken = response.AuthenticationResult.IdToken;
