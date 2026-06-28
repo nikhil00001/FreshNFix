@@ -10,6 +10,18 @@
 </p>
 
 ---
+## 🎯 Business Pitch
+
+Who the business is:
+
+FreshNFix is a local grocery delivery startup that needed a complete digital presence to reach customers online and compete with larger players in the market.
+What problem the website solves:
+
+The business had no online platform — customers couldn't browse products, place orders, or even find them digitally. Everything was manual and word-of-mouth, which severely limited their reach and operational efficiency.
+How it helps attract customers:
+
+The website gives FreshNFix a professional, mobile-friendly storefront where customers can browse a categorized product catalog, add items to a persistent cart, and place orders seamlessly — all from their phone. Features like OTP-based login (no password friction), GPS-powered address autofill, and a full order history make the experience fast and trustworthy. On the backend, an admin dashboard lets the owner manage products and track orders in real time, replacing manual effort entirely.
+The result: a business that previously existed only offline now has a live, scalable web presence that builds customer trust and drives repeat orders.
 
 ## ✨ Key Features
 
